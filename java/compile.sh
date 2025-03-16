@@ -50,8 +50,10 @@ ssh ${COMPILEHOST} "cd ${COMPILEHOST_WORKSPACE}; GRAALVM_HOME=${COMPILEHOST_GRAA
 echo "Transfering code from phone"
 mkdir -p include
 scp ${COMPILEHOST}:"${COMPILEHOST_WORKSPACE}/extractor/build/native/nativeCompile/*.h" ./include/
+scp ${COMPILEHOST}:"${COMPILEHOST_WORKSPACE}/appwrapper/build/native/nativeCompile/*.h" ./include/
 mkdir -p lib
 scp ${COMPILEHOST}:"${COMPILEHOST_WORKSPACE}/extractor/build/native/nativeCompile/extractor.so" ./lib/
+scp ${COMPILEHOST}:"${COMPILEHOST_WORKSPACE}/appwrapper/build/native/nativeCompile/appwrapper.so" ./lib/
 
 
 
