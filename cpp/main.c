@@ -6,7 +6,7 @@
 #include "appwrapper.h"
 
 void printExtracted(char* response) {
-    Json *json;
+    Json* json;
     json = json_new();
 
     bool success = json_deserialize_string(json, response, strlen(response));
@@ -40,8 +40,8 @@ void printExtracted(char* response) {
 }
 
 int main(int argc, char** argv) {
-    graal_isolate_t *isolate = NULL;
-    graal_isolatethread_t *thread = NULL;
+    graal_isolate_t* isolate = NULL;
+    graal_isolatethread_t* thread = NULL;
     
     if (graal_create_isolate(NULL, &isolate, &thread) != 0) {
         fprintf(stderr, "initialization error\n");
@@ -50,8 +50,8 @@ int main(int argc, char** argv) {
     
     init(thread);
     
-    Buffer *buffer = buffer_new(1024);
-    Json *json;
+    Buffer* buffer = buffer_new(1024);
+    Json* json;
     char* result;
 
     json = json_new();
@@ -74,6 +74,17 @@ int main(int argc, char** argv) {
 
     result = invoke(thread, "downloadExtract", buffer_get_buffer(buffer));
     printExtracted(result);
+
+    json_delete(json);
+    json = json_new();
+
+    // Third call
+    json_add_string(json, "service", "YouTube");
+    json_add_string(json, "query", "Sailfis");
+    json_serialize_buffer(json, buffer);
+
+    result = invoke(thread, "getSuggestions", buffer_get_buffer(buffer));
+    printf("Suggestion results: \n%s\n", result);
 
     json_delete(json);
     buffer_delete(buffer);    
