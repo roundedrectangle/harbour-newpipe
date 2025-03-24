@@ -76,11 +76,31 @@ struct _KeyValues {
 	char * key;
 	JSONTYPE type;
 	char * value_string;
-	KeyValues * value_sublist;
+	Json * value_dict;
 	double value_decimal;
 	long long int value_int;
+	JsonList * value_list;
 
 	KeyValues * next;
+};
+
+typedef struct _Values Values;
+
+struct _Values {
+	JSONTYPE type;
+	char * value_string;
+	Json * value_dict;
+	double value_decimal;
+	long long int value_int;
+	JsonList * value_list;
+
+	Values * next;
+};
+
+struct _JsonList {
+	size_t len;
+	Values * first;
+	Values * last;
 };
 
 /**
@@ -113,7 +133,7 @@ typedef enum _DESERSTATE {
 	DESERSTATE_INVALID = -1,
 
 	DESERSTATE_NONE,
-	DESERSTATE_LIST,
+	DESERSTATE_DICT,
 	DESERSTATE_KEYSINGLE,
 	DESERSTATE_KEY,
 	DESERSTATE_KEYESCAPED,
@@ -130,21 +150,61 @@ typedef enum _DESERSTATE {
 	DESERSTATE_NUM
 } DESERSTATE;
 
+/**
+ * @brief Internal state for json list deserialisation
+ *
+ * JSON list deserialisation uses a state machine to determine the correct
+ * inputs that are to be expected. This enum defines the possible states
+ * that the state machine cna enter into.
+ */
+typedef enum LISTSTATE {
+	LISTSTATE_INVALID = -1,
+
+	LISTSTATE_NONE,
+	LISTSTATE_LIST,
+	LISTSTATE_VALUESTRING,
+	LISTSTATE_VALUESTRINGESCAPED,
+	LISTSTATE_VALUENUMBER,
+	LISTSTATE_PREVALUE,
+	LISTSTATE_POSTVALUE,
+	LISTSTATE_POSTLIST,
+	LISTSTATE_ERROR,
+	LISTSTATE_DONE,
+
+	LISTSTATE_NUM
+} LISTSTATE;
+
 // Function prototypes
+
+
+static KeyValues * keyvalues_new(char const * const key);
+static void keyvalues_delete(KeyValues * keyvalues);
+static void keyvalues_clear(KeyValues * keyvalues);
 
 static size_t keyvalues_serialize_size(KeyValues * keyvalues);
 static size_t keyvalues_serialize(KeyValues * keyvalues, char * buffer, size_t size);
 static size_t keyvalues_deserialize(KeyValues ** keyvalues, char const * json_string, size_t length, bool * error);
-static void keyvalues_delete(KeyValues * keyvalues);
+
 static KeyValues * keyvalues_add_string(KeyValues * keyvalues, char const * key, char const * value);
 static KeyValues * keyvalues_add_buffer(KeyValues * keyvalues, char const * key, Buffer const * value);
 static KeyValues * keyvalues_add_decimal(KeyValues * keyvalues, char const * key, double value);
 static KeyValues * keyvalues_add_integer(KeyValues * keyvalues, char const * key, long long int value);
-static KeyValues * keyvalues_add_sublist(KeyValues * keyvalues, char const * key, KeyValues * value);
+static KeyValues * keyvalues_add_dict(KeyValues * keyvalues, char const * key, Json * value);
+static KeyValues * keyvalues_add_list(KeyValues * keyvalues, char const * key, JsonList * value);
+
 static KeyValues * keyvalues_find(KeyValues * keyvalues, char const * key);
 static bool keyvalues_readnumber(KeyValues * keyvalues, char const * start, char const * end);
 static char * keyvalues_unescape(char const * start, char const * end);
 static size_t keyvalues_escape(char * output, size_t size, char const * unescaped);
+
+static Values * values_new();
+static void values_delete(Values * values);
+static void values_clear(Values * values);
+static void jsonlist_push(JsonList * jsonlist, Values * values);
+static bool values_readnumber(Values * values, char const * start, char const * end);
+static size_t jsonlist_deserialize(JsonList ** jsonlist, char const * json_string, size_t length, bool * error);
+static size_t jsonlist_serialize_size(JsonList * jsonlist);
+static size_t jsonlist_serialize(JsonList * jsonlist, char * buffer, size_t size);
 
 // Function definitions
 
@@ -155,10 +215,10 @@ static size_t keyvalues_escape(char * output, size_t size, char const * unescape
  */
 Json * json_new() {
 	Json * json;
-	
+
 	json = calloc(sizeof(Json), 1);
 	json->keyvalues = NULL;
-	
+
 	return json;
 }
 
@@ -173,6 +233,19 @@ void json_delete(Json * json) {
 			keyvalues_delete(json->keyvalues);
 		}
 		free (json);
+	}
+}
+
+/**
+ * Remove all entries from the class, freeing up the memory allocated to them,
+ * but leaving the Json object valid but empty.
+ *
+ * @param json The object to free.
+ */
+void json_clear(Json * json) {
+	if (json && json->keyvalues) {
+		keyvalues_delete(json->keyvalues);
+		json->keyvalues = NULL;
 	}
 }
 
@@ -226,24 +299,28 @@ void json_add_buffer(Json * json, char const * key, Buffer const * value) {
 }
 
 /**
- * Add a key-value pair to the data items where the value is a sublist of the
- * current list.
- * As a sublist, json_get_type() will return JSONTYPE_SUBLIST for this item.
+ * Add a key-value pair to the data items where the value is a dictionary.
+ * As a dict, json_get_type() will return JSONTYPE_DICT for this item.
  *
  * @param json The json object
  * @param key Null-terminated string representing the key
- * @param sublist the sublist to store against the key
+ * @param dict the dictionary to store against the key
  */
-void json_add_sublist(Json * json, char const * key, Json * sublist) {
-	KeyValues * keyvalues;
-	if (sublist) {
-		keyvalues = sublist->keyvalues;
-		json->keyvalues = keyvalues_add_sublist(json->keyvalues, key, keyvalues);
-		sublist->keyvalues = NULL;
-	}
-	else {
-		keyvalues = NULL;
-	}
+void json_add_dict(Json * json, char const * key, Json * dict) {
+	json->keyvalues = keyvalues_add_dict(json->keyvalues, key, dict);
+}
+
+/**
+ * Add a list to the data items where the value is a list.
+ * As a list, json_get_type() will return JSONTYPE_LIST for this item.
+ *
+ * @param json The json object
+ * @param key Null-terminated string representing the key
+ * @param list the list to store against the key
+ */
+void json_add_list(Json * json, char const * key, JsonList * list) {
+	Values * values;
+	json->keyvalues = keyvalues_add_list(json->keyvalues, key, list);
 }
 
 /**
@@ -287,7 +364,7 @@ size_t json_serialize(Json * json, char * buffer, size_t size) {
  */
 size_t json_serialize_buffer(Json * json, Buffer * buffer) {
 	size_t size;
-	
+
 	size = json_serialize_size(json) + 1;
 	buffer_set_min_size(buffer, size);
 	size = keyvalues_serialize(json->keyvalues, buffer_get_buffer(buffer), size);
@@ -303,7 +380,7 @@ size_t json_serialize_buffer(Json * json, Buffer * buffer) {
  *
  * @param json The json object
  * @param json_string The string in JSON format to be deserialized. The string
-                      doesn't need to be null-termianted
+ *                   doesn't need to be null-termianted
  * @param length The quantity of data to read in
  * @return true if decerialization completed successfully, false o/w. Reasons
  *         the deserialization might fail include a malformed JSON string,
@@ -417,7 +494,7 @@ static size_t keyvalues_deserialize(KeyValues ** keyvalues, char const * json_st
 	bool result;
 
 	state = DESERSTATE_NONE;
-	
+
 	consume_start = json_string;
 	consume_end = consume_start;
 	*error = false;
@@ -435,7 +512,7 @@ static size_t keyvalues_deserialize(KeyValues ** keyvalues, char const * json_st
 				// The only way to start is with an open bracket or whitespace, otherwise it's an error
 				switch (next_char) {
 					case '{':
-						state = DESERSTATE_LIST;
+						state = DESERSTATE_DICT;
 						consume_start++;
 						consume_end = consume_start;
 						break;
@@ -453,8 +530,8 @@ static size_t keyvalues_deserialize(KeyValues ** keyvalues, char const * json_st
 						break;
 				}
 				break;
-			case DESERSTATE_LIST:
-				// The list has started, so now we're looking for key-value pairs or the end of the list
+			case DESERSTATE_DICT:
+				// The dict has started, so now we're looking for key-value pairs or the end of the dict
 				// So, either an open quote or a close bracket
 				switch (next_char) {
 					case '\"':
@@ -562,8 +639,8 @@ static size_t keyvalues_deserialize(KeyValues ** keyvalues, char const * json_st
 			case DESERSTATE_PREVALUE:
 				// We've found the separating colon, now we want to find a value
 				// This will either start with a quote if it's a string, an
-				// open bracket if it's a sublist or be part of a decimal value
-				// JSON also supports arrays with square brackets, but we don't support them yet
+				// open bracket if it's a dict a square bracket if it's a list
+				// or be part of a decimal value
 				switch (next_char) {
 					case '\"':
 						// We've found a quote, so this is a string
@@ -572,9 +649,16 @@ static size_t keyvalues_deserialize(KeyValues ** keyvalues, char const * json_st
 						consume_end = consume_start;
 						break;
 					case '{':
-						// We've found an open bracket, so this is a sublist. Recurse.
-						current->type = JSONTYPE_SUBLIST;
-						consume_start += keyvalues_deserialize(& current->value_sublist, consume_start, length - (consume_end - consume_start), error);
+						// We've found an open bracket, so this is a dict. Recurse.
+						current->type = JSONTYPE_DICT;
+						consume_start += keyvalues_deserialize(& current->value_dict->keyvalues, consume_start, length - (consume_end - consume_start), error);
+						consume_end = consume_start;
+						state = DESERSTATE_POSTVALUE;
+						break;
+					case '[':
+						// We've found an open square bracket, so this is a list.
+						current->type = JSONTYPE_LIST;
+						consume_start += jsonlist_deserialize(& current->value_list, consume_start, length - (consume_end - consume_start), error);
 						consume_end = consume_start;
 						state = DESERSTATE_POSTVALUE;
 						break;
@@ -668,10 +752,10 @@ static size_t keyvalues_deserialize(KeyValues ** keyvalues, char const * json_st
 				break;
 			case DESERSTATE_POSTVALUE:
 				// After the value's been read we'd expect to find either a comma to signify
-				// the next key-value pair, or a close bracket to signify the end of the list
+				// the next key-value pair, or a close bracket to signify the end of the dict
 				switch (next_char) {
 					case ',':
-						state = DESERSTATE_LIST;
+						state = DESERSTATE_DICT;
 						consume_start++;
 						consume_end = consume_start;
 						break;
@@ -710,7 +794,7 @@ static size_t keyvalues_deserialize(KeyValues ** keyvalues, char const * json_st
 						break;
 					default:
 						// Anything other than whitespace means we're done
-						// If this is a sublist, this won't be an error (becuase there will be more characters to
+						// If this is a dict, this won't be an error (becuase there will be more characters to
 						// consume). However, if this is the top level JSON structure, this will cause an error
 						// because there's a check for whether the entire string was read in successfully. The
 						// check is perfomed in json_deserialize_string().
@@ -793,6 +877,55 @@ static bool keyvalues_readnumber(KeyValues * keyvalues, char const * start, char
 
 	return result;
 }
+
+/**
+ * Internal function that reads in a number and stores the result in the
+ * previously allocated Values structure.
+ *
+ * The function figures out if the number is an integer. If it is, it's stored
+ * as JSONTYPE_INTEGER. If it's a rational, it's stored as a JSONTYPE_DECIMAL.
+ * If it's not a valid number, no value is stored and the function returns
+ * false.
+ *
+ * @param values An already allocated KeyValues structure to store the
+ *        result in.
+ * @param start The start of the string to read in.
+ * @param end The end of the string to read in.
+ * @return True if the string represents a valid number, false o/w.
+ */
+static bool values_readnumber(Values * values, char const * start, char const * end) {
+	char * number;
+	int valuesread;
+	bool result;
+	double readdouble;
+	long long int readint;
+	char toss[2];
+
+	result = false;
+	number = malloc(end - start + 1);
+	memcpy(number, start, end - start);
+	number[end - start] = '\0';
+
+	valuesread = sscanf(number, "%256lld%1s", & readint, toss);
+	if (valuesread == 1) {
+		values->type = JSONTYPE_INTEGER;
+		values->value_int = readint;
+		result = true;
+	}
+	else {
+		valuesread = sscanf(number, "%256lf%1s", & readdouble, toss);
+		if (valuesread == 1) {
+			values->type = JSONTYPE_DECIMAL;
+			values->value_decimal = readdouble;
+			result = true;
+		}
+	}
+
+	free(number);
+
+	return result;
+}
+
 
 /**
  * Internal function that takes in a string and returns a newly allocated copy
@@ -1005,7 +1138,7 @@ static size_t keyvalues_escape(char * output, size_t size, char const * unescape
 static size_t keyvalues_serialize_size(KeyValues * keyvalues) {
 	size_t size;
 	KeyValues * pos;
-	
+
 	// Opening bracket
 	size = 1u;
 	pos = keyvalues;
@@ -1027,9 +1160,13 @@ static size_t keyvalues_serialize_size(KeyValues * keyvalues) {
 				// Integer value without quotes
 				size += snprintf(NULL, 0, JSON_INT_FORMAT, pos->value_int);
 				break;
-			case JSONTYPE_SUBLIST:
-				// Sublist without quotes
-				size += keyvalues_serialize_size(pos->value_sublist);
+			case JSONTYPE_DICT:
+				// Dict without quotes
+				size += json_serialize_size(pos->value_dict);
+				break;
+			case JSONTYPE_LIST:
+				// List without quotes
+				size += jsonlist_serialize_size(pos->value_list);
 				break;
 			default:
 				// Empty quotes
@@ -1045,7 +1182,7 @@ static size_t keyvalues_serialize_size(KeyValues * keyvalues) {
 	}
 	// Closing bracket
 	size += 1u;
-	
+
 	return size;
 }
 
@@ -1060,7 +1197,7 @@ static size_t keyvalues_serialize_size(KeyValues * keyvalues) {
 static size_t keyvalues_serialize(KeyValues * keyvalues, char * buffer, size_t size) {
 	unsigned int used;
 	KeyValues * pos;
-	
+
 	used = 0u;
 	// Surrounding brackets
 	used += snprintf(buffer + used, size - used, "{");
@@ -1083,9 +1220,13 @@ static size_t keyvalues_serialize(KeyValues * keyvalues, char * buffer, size_t s
 				// Integer value without quotes
 				used += snprintf(buffer + used, size - used, JSON_INT_FORMAT, pos->value_int);
 				break;
-			case JSONTYPE_SUBLIST:
-				// Sublist without quotes
-				used += keyvalues_serialize(pos->value_sublist, buffer + used, size - used);
+			case JSONTYPE_DICT:
+				// Dict without quotes
+				used += json_serialize(pos->value_dict, buffer + used, size - used);
+				break;
+			case JSONTYPE_LIST:
+				// List without quotes
+				used += jsonlist_serialize(pos->value_list, buffer + used, size - used);
 				break;
 			default:
 				// Empty quotes
@@ -1100,8 +1241,112 @@ static size_t keyvalues_serialize(KeyValues * keyvalues, char * buffer, size_t s
 		}
 	}
 	used += snprintf(buffer + used, size - used, "}");
-	
+
 	return used;
+}
+
+static size_t jsonlist_serialize_size(JsonList * jsonlist) {
+	size_t size;
+	Values * pos;
+
+	// Opening square bracket
+	size = 1u;
+	pos = jsonlist->first;
+	while (pos) {
+		switch (pos->type) {
+			case JSONTYPE_STRING:
+				// String value surrounded by quotes
+				size += keyvalues_escape(NULL, 0, pos->value_string);
+				break;
+			case JSONTYPE_DECIMAL:
+				// Decimal value without quotes
+				size += snprintf(NULL, 0, JSON_DECIMAL_FORMAT, pos->value_decimal);
+				break;
+			case JSONTYPE_INTEGER:
+				// Integer value without quotes
+				size += snprintf(NULL, 0, JSON_INT_FORMAT, pos->value_int);
+				break;
+			case JSONTYPE_DICT:
+				// Dict without quotes
+				size += json_serialize_size(pos->value_dict);
+				break;
+			case JSONTYPE_LIST:
+				// List without quotes
+				size += jsonlist_serialize_size(pos->value_list);
+				break;
+			default:
+				// Empty quotes
+				size += 2u;
+				break;
+		}
+		pos = pos->next;
+
+		if (pos) {
+			// Comma
+			size += 1;
+		}
+	}
+	// Closing square bracket
+	size += 1u;
+
+	return size;
+}
+
+static size_t jsonlist_serialize(JsonList * jsonlist, char * buffer, size_t size) {
+	unsigned int used;
+	Values * pos;
+
+	used = 0u;
+	// Surrounding square brackets
+	used += snprintf(buffer + used, size - used, "[");
+	pos = jsonlist->first;
+	while (pos) {
+		switch (pos->type) {
+			case JSONTYPE_STRING:
+				// String value surrounded by quotes
+				used += keyvalues_escape(buffer + used, size - used, pos->value_string);
+				break;
+			case JSONTYPE_DECIMAL:
+				// Decimal value without quotes
+				used += snprintf(buffer + used, size - used, JSON_DECIMAL_FORMAT, pos->value_decimal);
+				break;
+			case JSONTYPE_INTEGER:
+				// Integer value without quotes
+				used += snprintf(buffer + used, size - used, JSON_INT_FORMAT, pos->value_int);
+				break;
+			case JSONTYPE_DICT:
+				// Dict without quotes
+				used += json_serialize(pos->value_dict, buffer + used, size - used);
+				break;
+			case JSONTYPE_LIST:
+				// List without quotes
+				used += jsonlist_serialize(pos->value_list, buffer + used, size - used);
+				break;
+			default:
+				// Empty quotes
+				used += snprintf(buffer + used, size - used, "\"\"");
+				break;
+		}
+		pos = pos->next;
+
+		if (pos) {
+			// Comma
+			used += snprintf(buffer + used, size - used, ",");
+		}
+	}
+	used += snprintf(buffer + used, size - used, "]");
+
+	return used;
+}
+
+static KeyValues * keyvalues_new(char const * const key) {
+	KeyValues * keyvalues;
+
+	keyvalues = calloc(sizeof(KeyValues), 1);
+	keyvalues->key = malloc(strlen(key) + 1);
+	strcpy(keyvalues->key, key);
+
+	return keyvalues;
 }
 
 /**
@@ -1113,22 +1358,30 @@ static size_t keyvalues_serialize(KeyValues * keyvalues, char * buffer, size_t s
 static void keyvalues_delete(KeyValues * keyvalues) {
 	KeyValues * remove;
 	while (keyvalues) {
-		if (keyvalues->key) {
-			free (keyvalues->key);
-			keyvalues->key = NULL;
-		}
-		if (keyvalues->value_string) {
-			free(keyvalues->value_string);
-			keyvalues->value_string = NULL;
-		}
-		if (keyvalues->value_sublist) {
-			keyvalues_delete(keyvalues->value_sublist);
-			keyvalues->value_sublist = NULL;
-		}
+		keyvalues_clear(keyvalues);
 		remove = keyvalues;
 		keyvalues = keyvalues->next;
 		free(remove);
 	}
+}
+
+static void keyvalues_clear(KeyValues * keyvalues) {
+	if (keyvalues->value_string) {
+		// free the value string
+		free(keyvalues->value_string);
+		keyvalues->value_string = NULL;
+	}
+	if (keyvalues->value_dict) {
+		// free the value dict
+		json_delete(keyvalues->value_dict);
+		keyvalues->value_dict = NULL;
+	}
+	if (keyvalues->value_list) {
+		// free the value dict
+		jsonlist_delete(keyvalues->value_list);
+		keyvalues->value_list = NULL;
+	}
+	keyvalues->value_decimal = 0.0;
 }
 
 /**
@@ -1145,28 +1398,14 @@ static KeyValues * keyvalues_add_string(KeyValues * keyvalues, char const * key,
 
 	position = keyvalues_find(keyvalues, key);
 	if (position) {
-		if (position->value_string) {
-			position->value_string = realloc(position->value_string, strlen(value) + 1);
-		}
-		else {
-			position->value_string = malloc(strlen(value) + 1);
-		}
-		if (position->value_sublist) {
-			// free the value sublist
-			keyvalues_delete(position->value_sublist);
-			position->value_sublist = NULL;
-		}
+		keyvalues_clear(position);
 	}
 	else {
-		position = calloc(sizeof(KeyValues), 1);
-		position->key = malloc(strlen(key) + 1);
-		strcpy(position->key, key);
-		position->value_string = malloc(strlen(value) + 1);
-		position->value_sublist = NULL;
+		position = keyvalues_new(key);
 		position->next = keyvalues;
 		keyvalues = position;
 	}
-	position->value_decimal = 0.0;
+	position->value_string = malloc(strlen(value) + 1);
 	strcpy(position->value_string, value);
 	position->type = JSONTYPE_STRING;
 
@@ -1187,24 +1426,13 @@ static KeyValues * keyvalues_add_buffer(KeyValues * keyvalues, char const * key,
 
 	position = keyvalues_find(keyvalues, key);
 	if (position) {
-		if (position->value_string) {
-			free(position->value_string);
-		}
-		if (position->value_sublist) {
-			// free the value sublist
-			keyvalues_delete(position->value_sublist);
-			position->value_sublist = NULL;
-		}
+		keyvalues_clear(position);
 	}
 	else {
-		position = calloc(sizeof(KeyValues), 1);
-		position->key = malloc(strlen(key) + 1);
-		strcpy(position->key, key);
-		position->value_sublist = NULL;
+		position = keyvalues_new(key);
 		position->next = keyvalues;
 		keyvalues = position;
 	}
-	position->value_decimal = 0.0;
 	position->value_string = buffer_copy_to_new_string(value);
 	position->type = JSONTYPE_STRING;
 
@@ -1225,23 +1453,10 @@ static KeyValues * keyvalues_add_decimal(KeyValues * keyvalues, char const * key
 
 	position = keyvalues_find(keyvalues, key);
 	if (position) {
-		if (position->value_string) {
-			// free the value string
-			free(position->value_string);
-			position->value_string = NULL;
-		}
-		if (position->value_sublist) {
-			// free the value sublist
-			keyvalues_delete(position->value_sublist);
-			position->value_sublist = NULL;
-		}
+		keyvalues_clear(position);
 	}
 	else {
-		position = calloc(sizeof(KeyValues), 1);
-		position->key = malloc(strlen(key) + 1);
-		strcpy(position->key, key);
-		position->value_string = NULL;
-		position->value_sublist = NULL;
+		position = keyvalues_new(key);
 		position->next = keyvalues;
 		keyvalues = position;
 	}
@@ -1265,23 +1480,10 @@ static KeyValues * keyvalues_add_integer(KeyValues * keyvalues, char const * key
 
 	position = keyvalues_find(keyvalues, key);
 	if (position) {
-		if (position->value_string) {
-			// free the value string
-			free(position->value_string);
-			position->value_string = NULL;
-		}
-		if (position->value_sublist) {
-			// free the value sublist
-			keyvalues_delete(position->value_sublist);
-			position->value_sublist = NULL;
-		}
+		keyvalues_clear(position);
 	}
 	else {
-		position = calloc(sizeof(KeyValues), 1);
-		position->key = malloc(strlen(key) + 1);
-		strcpy(position->key, key);
-		position->value_string = NULL;
-		position->value_sublist = NULL;
+		position = keyvalues_new(key);
 		position->next = keyvalues;
 		keyvalues = position;
 	}
@@ -1293,39 +1495,45 @@ static KeyValues * keyvalues_add_integer(KeyValues * keyvalues, char const * key
 
 /**
  * Internal function for adding a key-value pair to the list where the value
- * is a sublist of key-value pairsl.
+ * is a dict of key-value pairsl.
  *
  * @param keyvalues The head of the list to add the value to
  * @param key The null-terminated key to add
- * @param value The sublist to be associated with the key
+ * @param value The dict to be associated with the key
  * @return The new head of the list
  */
-static KeyValues * keyvalues_add_sublist(KeyValues * keyvalues, char const * key, KeyValues * value) {
+static KeyValues * keyvalues_add_dict(KeyValues * keyvalues, char const * key, Json * value) {
 	KeyValues * position;
 
 	position = keyvalues_find(keyvalues, key);
 	if (position) {
-		if (position->value_string) {
-			// free the value string
-			free(position->value_string);
-			position->value_string = NULL;
-		}
-		if (position->value_sublist) {
-			// free the value sublist
-			keyvalues_delete(position->value_sublist);
-		}
+		keyvalues_clear(position);
 	}
 	else {
-		position = calloc(sizeof(KeyValues), 1);
-		position->key = malloc(strlen(key) + 1);
-		strcpy(position->key, key);
-		position->value_string = NULL;
+		position = keyvalues_new(key);
 		position->next = keyvalues;
 		keyvalues = position;
 	}
-	position->value_decimal = 0.0;
-	position->value_sublist = value;
-	position->type = JSONTYPE_SUBLIST;
+	position->value_dict = value;
+	position->type = JSONTYPE_DICT;
+
+	return keyvalues;
+}
+
+static KeyValues * keyvalues_add_list(KeyValues * keyvalues, char const * key, JsonList * value) {
+	KeyValues * position;
+
+	position = keyvalues_find(keyvalues, key);
+	if (position) {
+		keyvalues_clear(position);
+	}
+	else {
+		position = keyvalues_new(key);
+		position->next = keyvalues;
+		keyvalues = position;
+	}
+	position->value_list = value;
+	position->type = JSONTYPE_LIST;
 
 	return keyvalues;
 }
@@ -1340,7 +1548,7 @@ static KeyValues * keyvalues_add_sublist(KeyValues * keyvalues, char const * key
  */
 static KeyValues * keyvalues_find(KeyValues * keyvalues, char const * key) {
 	KeyValues * found = NULL;
-	
+
 	while ((found == NULL) && (keyvalues != NULL)) {
 		if (strcmp(keyvalues->key, key) == 0) {
 			found = keyvalues;
@@ -1365,19 +1573,11 @@ char const * json_get_string(Json * json, char const * key) {
 
 	position = keyvalues_find(json->keyvalues, key);
 
-	if (position != NULL) {
-		if (position->type == JSONTYPE_STRING) {
-			result = position->value_string;
-		}
-		else {
-			result = NULL;
-		}
+	result = NULL;
+	if ((position != NULL) && (position->type == JSONTYPE_STRING)) {
+		result = position->value_string;
+	}
 
-	}
-	else {
-		result = NULL;
-	}
-	
 	return result;
 }
 
@@ -1395,19 +1595,11 @@ double json_get_decimal(Json * json, char const * key) {
 
 	position = keyvalues_find(json->keyvalues, key);
 
-	if (position != NULL) {
-		if (position->type == JSONTYPE_DECIMAL) {
-			result = position->value_decimal;
-		}
-		else {
-			result = 0.0;
-		}
+	result = 0.0;
+	if ((position != NULL) && (position->type == JSONTYPE_DECIMAL)) {
+		result = position->value_decimal;
+	}
 
-	}
-	else {
-			result = 0.0;
-	}
-	
 	return result;
 }
 
@@ -1425,17 +1617,9 @@ long long int json_get_integer(Json * json, char const * key) {
 
 	position = keyvalues_find(json->keyvalues, key);
 
-	if (position != NULL) {
-		if (position->type == JSONTYPE_INTEGER) {
-			result = position->value_int;
-		}
-		else {
-			result = 0;
-		}
-
-	}
-	else {
-		result = 0;
+	result = 0;
+	if ((position != NULL) && (position->type == JSONTYPE_INTEGER)) {
+		result = position->value_int;
 	}
 
 	return result;
@@ -1458,21 +1642,49 @@ double json_get_number(Json * json, char const * key) {
 
 	position = keyvalues_find(json->keyvalues, key);
 
+	result = 0.0;
 	if (position != NULL) {
 		switch (position->type) {
-		case JSONTYPE_DECIMAL:
-			result = position->value_decimal;
-			break;
-		case JSONTYPE_INTEGER:
-			result = position->value_int;
-			break;
-		default:
-			result = 0.0;
-			break;
+			case JSONTYPE_DECIMAL: {
+				result = position->value_decimal;
+				break;
+			}
+			case JSONTYPE_INTEGER: {
+				result = position->value_int;
+				break;
+			}
+			default: {
+				break;
+			}
 		}
 	}
-	else {
-		result = 0.0;
+
+	return result;
+}
+
+Json * json_get_dict(Json * json, char const * key) {
+	KeyValues * position;
+	Json * result;
+
+	position = keyvalues_find(json->keyvalues, key);
+
+	result = NULL;
+	if ((position != NULL) && (position->type == JSONTYPE_DICT)) {
+		result = position->value_dict;
+	}
+
+	return result;
+}
+
+JsonList * json_get_list(Json * json, char const * key) {
+	KeyValues * position;
+	JsonList * result;
+
+	position = keyvalues_find(json->keyvalues, key);
+
+	result = NULL;
+	if ((position != NULL) && (position->type == JSONTYPE_LIST)) {
+		result = position->value_list;
 	}
 
 	return result;
@@ -1480,7 +1692,7 @@ double json_get_number(Json * json, char const * key) {
 
 /**
  * Return the type of the value assocated with a given key. Can be one of
- * JSONTYPE_STRING, JSONTYPE_SUBLIST or JSONTYPE_DECIMAL. If the key doesn't
+ * JSONTYPE_STRING, JSONTYPE_DICT or JSONTYPE_DECIMAL. If the key doesn't
  * exist in the list, a value of JSONTYPE_INVALID will be returned.
  *
  * @param json The json object to search
@@ -1499,8 +1711,557 @@ JSONTYPE json_get_type(Json * json, char const * key) {
 	else {
 		result = JSONTYPE_INVALID;
 	}
-	
+
 	return result;
+}
+
+
+JsonList * jsonlist_new() {
+	JsonList * jsonlist;
+
+	jsonlist = calloc(sizeof(JsonList), 1);
+
+	return jsonlist;
+}
+
+void jsonlist_delete(JsonList * jsonlist) {
+	if (jsonlist) {
+		jsonlist_clear(jsonlist);
+		free(jsonlist);
+	}
+}
+
+void jsonlist_clear(JsonList * jsonlist) {
+	if (jsonlist && jsonlist->first) {
+		values_delete(jsonlist->first);
+		jsonlist->first = NULL;
+		jsonlist->last = NULL;
+		jsonlist->len = 0;
+	}
+}
+
+
+
+static Values * values_new() {
+	Values * values;
+
+	values = calloc(sizeof(Values), 1);
+
+	return values;
+}
+
+static void values_delete(Values * values) {
+	Values * remove;
+	while (values) {
+		values_clear(values);
+		remove = values;
+		values = values->next;
+		free(remove);
+	}
+}
+
+static void values_clear(Values * values) {
+	if (values) {
+		if (values->value_string) {
+			// free the value string
+			free(values->value_string);
+			values->value_string = NULL;
+		}
+		if (values->value_dict) {
+			// free the value dict
+			json_delete(values->value_dict);
+			values->value_dict = NULL;
+		}
+		if (values->value_list) {
+			// free the value dict
+			jsonlist_delete(values->value_list);
+			values->value_list = NULL;
+		}
+		values->value_decimal = 0.0;
+	}
+}
+
+static void jsonlist_push(JsonList * jsonlist, Values * values) {
+	if (values) {
+		if (jsonlist->last) {
+			jsonlist->last->next = values;
+			jsonlist->last = values;
+		}
+		else {
+			jsonlist->first = values;
+			jsonlist->last = values;
+		}
+		jsonlist->len += 1;
+	}
+}
+
+void jsonlist_push_string(JsonList * jsonlist, char const * value) {
+	Values * values;
+
+	values = values_new();
+	values->value_string = malloc(strlen(value) + 1);
+	strcpy(values->value_string, value);
+	values->type = JSONTYPE_STRING;
+
+	jsonlist_push(jsonlist, values);
+}
+
+void jsonlist_push_buffer(JsonList * jsonlist, Buffer const * value) {
+	Values * values;
+
+	values = values_new();
+	values->value_string = buffer_copy_to_new_string(value);
+	values->type = JSONTYPE_STRING;
+
+	jsonlist_push(jsonlist, values);
+}
+
+void jsonlist_push_decimal(JsonList * jsonlist, double value) {
+	Values * values;
+
+	values = values_new();
+	values->value_decimal = value;
+	values->type = JSONTYPE_DECIMAL;
+
+	jsonlist_push(jsonlist, values);
+}
+
+void jsonlist_push_integer(JsonList * jsonlist, long long int value) {
+	Values * values;
+
+	values = values_new();
+	values->value_int = value;
+	values->type = JSONTYPE_INTEGER;
+
+	jsonlist_push(jsonlist, values);
+}
+
+void jsonlist_push_dict(JsonList * jsonlist, Json * value) {
+	Values * values;
+
+	values = values_new();
+	values->value_dict = value;
+	values->type = JSONTYPE_DICT;
+
+	jsonlist_push(jsonlist, values);
+}
+
+void jsonlist_push_list(JsonList * jsonlist, JsonList * value) {
+	Values * values;
+
+	values = values_new();
+	values->value_list = value;
+	values->type = JSONTYPE_LIST;
+
+	jsonlist_push(jsonlist, values);
+}
+
+size_t jsonlist_get_len(JsonList * jsonlist) {
+	return jsonlist->len;
+}
+
+Values * jsonlist_get_index(JsonList * jsonlist, size_t index) {
+	Values * values;
+
+	if (index < jsonlist->len) {
+		values = jsonlist->first;
+		while ((index > 0) && values->next) {
+			index -= 1;
+			values = values->next;
+		}
+	}
+	else {
+		values = NULL;
+	}
+
+	return values;
+}
+
+JSONTYPE jsonlist_get_type(JsonList * jsonlist, size_t index) {
+	Values * values;
+	JSONTYPE jsontype;
+
+	jsontype = JSONTYPE_INVALID;
+	values = jsonlist_get_index(jsonlist, index);
+	if (values) {
+		jsontype = values->type;
+	}
+
+	return jsontype;
+}
+
+char const * jsonlist_get_string(JsonList * jsonlist, size_t index) {
+	Values * values;
+	char const * value;
+
+	value = NULL;
+	values = jsonlist_get_index(jsonlist, index);
+	if (values && (values->type == JSONTYPE_STRING)) {
+		value = values->value_string;
+	}
+
+	return value;
+}
+
+double jsonlist_get_decimal(JsonList * jsonlist, size_t index) {
+	Values * values;
+	double value;
+
+	value = 0.0;
+	values = jsonlist_get_index(jsonlist, index);
+	if (values && (values->type == JSONTYPE_DECIMAL)) {
+		value = values->value_decimal;
+	}
+
+	return value;
+}
+
+long long int jsonlist_get_integer(JsonList * jsonlist, size_t index) {
+	Values * values;
+	long long int value;
+
+	value = 0;
+	values = jsonlist_get_index(jsonlist, index);
+	if (values && (values->type == JSONTYPE_DECIMAL)) {
+		value = values->value_int;
+	}
+
+	return value;
+}
+
+double jsonlist_get_number(JsonList * jsonlist, size_t index) {
+	Values * values;
+	double value;
+
+	value = 0.0;
+	values = jsonlist_get_index(jsonlist, index);
+	if (values) {
+		switch (values->type) {
+			case JSONTYPE_DECIMAL: {
+				value = values->value_decimal;
+				break;
+			}
+			case JSONTYPE_INTEGER: {
+				value = values->value_int;
+				break;
+			}
+			default: {
+				break;
+			}
+		}
+	}
+
+	return value;
+}
+
+Json * jsonlist_get_dict(JsonList * jsonlist, size_t index) {
+	Values * values;
+	Json * value;
+
+	value = 0;
+	values = jsonlist_get_index(jsonlist, index);
+	if (values && (values->type == JSONTYPE_DICT)) {
+		value = values->value_dict;
+	}
+
+	return value;
+}
+
+JsonList * jsonlist_get_list(JsonList * jsonlist, size_t index) {
+	Values * values;
+	JsonList * value;
+
+	value = 0;
+	values = jsonlist_get_index(jsonlist, index);
+	if (values && (values->type == JSONTYPE_LIST)) {
+		value = values->value_list;
+	}
+
+	return value;
+}
+
+
+/**
+ * Internal function for deserializing a string into a value list.
+ *
+ * @param jsonlist Reference for storing the head of the returned structure.
+ *                 This doesn't need to point to a valid JsonList structure
+ *                 on entry, but will be pointed to one on return.
+ * @param json_string The start of the JSON string list to deserialize
+ * @param length The length of the JSON string to deserialize
+ * @return the number of characters of the JSON string list consumed by the
+ *         deserialization (which will be all of it, as long as it's a valid
+ *         JSON string list).
+ */
+static size_t jsonlist_deserialize(JsonList ** jsonlist, char const * json_string, size_t length, bool * error) {
+	char next_char;
+	char const * consume_start;
+	char const * consume_end;
+	LISTSTATE state;
+	Values * first;
+	Values * last;
+	size_t len;
+	Values * current;
+	bool result;
+
+	state = LISTSTATE_NONE;
+
+	consume_start = json_string;
+	consume_end = consume_start;
+	*error = false;
+
+	// Simple serialization state machine
+	current = NULL;
+	first = NULL;
+	last = NULL;
+	len = 0;
+	next_char = consume_end[0];
+	while ((next_char != '\0') && (consume_end < (json_string + length)) && (state != LISTSTATE_DONE) && (state != LISTSTATE_ERROR) && (*error == false)) {
+		next_char = consume_end[0];
+		//printf("State: %d, char: %c, pos: %p\n", state, next_char, consume_end);
+		switch (state) {
+			case LISTSTATE_NONE:
+				// Nothing seen yet, so we're just getting started
+				// The only way to start is with an open square bracket or whitespace, otherwise it's an error
+				switch (next_char) {
+					case '[':
+						state = LISTSTATE_LIST;
+						consume_start++;
+						consume_end = consume_start;
+						break;
+					case ' ':
+					case '\t':
+					case '\f':
+					case '\n':
+					case '\r':
+						// Skip whitespace
+						consume_start++;
+						consume_end = consume_start;
+						break;
+					default:
+						state = LISTSTATE_ERROR;
+						break;
+				}
+				break;
+			case LISTSTATE_LIST:
+				// The list has started, so now we're looking for values or the end of the list
+				// This will either start with a quote if it's a string, an
+				// open bracket if it's a dict a square bracket if it's a list
+				// or be part of a decimal value
+				current = values_new();
+
+				switch (next_char) {
+					case '\"':
+						// We've found a quote, so this is a string
+						state = LISTSTATE_VALUESTRING;
+						consume_start++;
+						consume_end = consume_start;
+						break;
+					case '{':
+						// We've found an open bracket, so this is a dict.
+						current->type = JSONTYPE_DICT;
+						consume_start += keyvalues_deserialize(& current->value_dict->keyvalues, consume_start, length - (consume_end - consume_start), error);
+						consume_end = consume_start;
+						state = LISTSTATE_POSTVALUE;
+						break;
+					case '[':
+						// We've found an open square bracket, so this is a list. Recurse.
+						current->type = JSONTYPE_LIST;
+						consume_start += jsonlist_deserialize(& current->value_list, consume_start, length - (consume_end - consume_start), error);
+						consume_end = consume_start;
+						state = LISTSTATE_POSTVALUE;
+						break;
+					case ']':
+						state = LISTSTATE_POSTLIST;
+						consume_start++;
+						consume_end = consume_start;
+						break;
+					case ' ':
+					case '\t':
+					case '\f':
+					case '\n':
+					case '\r':
+						// Skip whitespace
+						consume_start++;
+						consume_end = consume_start;
+						break;
+					default:
+						state = LISTSTATE_VALUENUMBER;
+						consume_end = consume_start;
+						break;
+				}
+				break;
+			case LISTSTATE_VALUESTRING:
+				// We found a quote, so this is a value string. Keep collecting the value
+				// until we hit the close quote
+				switch (next_char) {
+					case '\"':
+						current->type = JSONTYPE_STRING;
+						current->value_string = keyvalues_unescape(consume_start, consume_end);
+
+						consume_end++;
+						consume_start = consume_end;
+						state = LISTSTATE_POSTVALUE;
+						break;
+					case '\\':
+						// Escaped character, so needs checking
+						consume_end++;
+						state = LISTSTATE_VALUESTRINGESCAPED;
+						break;
+					default:
+						consume_end++;
+						break;
+				}
+				break;
+			case LISTSTATE_VALUESTRINGESCAPED:
+				// Check that this is a valid escape character and if it is consume it
+				// See RFC 4627 Section 2.5 for valid sequences
+				// https://www.ietf.org/rfc/rfc4627.txt
+				switch (next_char) {
+					case '\"':
+					case '\\':
+					case '/':
+					case 'b':
+					case 'f':
+					case 'n':
+					case 'r':
+					case 't':
+					case 'u':
+						// Consume the escaped character
+						consume_end++;
+						state = LISTSTATE_VALUESTRING;
+						break;
+					default:
+						// Onlly these escape sequences are allowed; anything else is an error
+						state = LISTSTATE_ERROR;
+						break;
+				}
+				break;
+			case LISTSTATE_VALUENUMBER:
+				// We should read any following values as parts of the decimal number,
+				// unless it's a comma, closing brace, or whitespace, in which case we've reached the end of the value
+				switch (next_char) {
+					case ',':
+					case ']':
+					case ' ':
+					case '\t':
+					case '\f':
+					case '\n':
+					case '\r':
+						// Read in the number (could be decimal or integer)
+						result = values_readnumber(current, consume_start, consume_end);
+						if (result == true) {
+							consume_start = consume_end;
+							state = LISTSTATE_POSTVALUE;
+						}
+						else {
+							// Error reading number
+							state = LISTSTATE_ERROR;
+						}
+						break;
+					default:
+						consume_end++;
+						break;
+				}
+				break;
+			case LISTSTATE_POSTVALUE:
+				// After the value's been read we'd expect to find either a comma to signify
+				// the next key-value pair, or a close bracket to signify the end of the dict
+				if (first == NULL) {
+					first = current;
+					last = current;
+					len = 1;
+				}
+				else {
+					last->next = current;
+					last = current;
+					len += 1;
+				}
+				current = NULL;
+				switch (next_char) {
+					case ',':
+						state = LISTSTATE_LIST;
+						consume_start++;
+						consume_end = consume_start;
+						break;
+					case ']':
+						state = LISTSTATE_POSTLIST;
+						consume_start++;
+						consume_end = consume_start;
+						break;
+					case ' ':
+					case '\t':
+					case '\f':
+					case '\n':
+					case '\r':
+						// Skip whitespace
+						consume_start++;
+						consume_end = consume_start;
+						break;
+					default:
+						// Values must be followed by a comma, closing brace or whitespace; anything else is an error
+						state = LISTSTATE_ERROR;
+						break;
+				}
+				break;
+			case LISTSTATE_POSTLIST:
+				// After the full JSON string has been read, we allow it to be followed by any number of
+				// whitespace characters.
+				switch (next_char) {
+					case ' ':
+					case '\t':
+					case '\f':
+					case '\n':
+					case '\r':
+						// Skip whitespace
+						consume_start++;
+						consume_end = consume_start;
+						break;
+					default:
+						// Anything other than whitespace means we're done
+						// If this is a dict, this won't be an error (becuase there will be more characters to
+						// consume). However, if this is the top level JSON structure, this will cause an error
+						// because there's a check for whether the entire string was read in successfully. The
+						// check is perfomed in json_deserialize_string().
+						state = LISTSTATE_DONE;
+						break;
+				}
+				break;
+			case LISTSTATE_ERROR:
+				// The JSON is poorly formed (or at least, not supported by us)
+				printf("JSON list deserialize error\n");
+				break;
+			default:
+				// Something went wrong, probably the string doesn't conform to our requirements
+				state = LISTSTATE_ERROR;
+				break;
+		}
+	} // while ((next_char != '\0') && (state != LISTSTATE_DONE))
+
+	// We never got to complete another value, so we should delete the value container
+	if (current) {
+		values_delete(current);
+		current = NULL;
+	}
+
+	if ((state != LISTSTATE_DONE) && (state != LISTSTATE_POSTLIST)) {
+		// Clean up on error
+		values_delete(first);
+		first = NULL;
+		*error = true;
+		printf("JSON list deserialize error\n");
+	}
+
+	// Set the return value
+	if (jsonlist) {
+		*jsonlist = jsonlist_new();
+		(*jsonlist)->first = first;
+		(*jsonlist)->last = last;
+		(*jsonlist)->len = len;
+	}
+
+	// Return the number of characters consumed
+	return consume_end - json_string;
 }
 
 /** @} addtogroup Datahandling */
