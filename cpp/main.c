@@ -55,36 +55,84 @@ int main(int argc, char** argv) {
     char* result;
 
     json = json_new();
+    JsonList * list;
 
     // First call
     json_add_string(json, "service", "YouTube");
     json_add_string(json, "url", "https://www.youtube.com/watch?v=NWqC9cORKi0");
     json_serialize_buffer(json, buffer);
 
-    result = invoke(thread, "downloadExtract", buffer_get_buffer(buffer));
-    printExtracted(result);
-
-    json_delete(json);
-    json = json_new();
+    //result = invoke(thread, "downloadExtract", buffer_get_buffer(buffer));
+    //printExtracted(result);
 
     // Second call
+    json_clear(json);
     json_add_string(json, "service", "SoundCloud");
     json_add_string(json, "url", "https://soundcloud.com/highviberecordsca/matt-williams-sailfish");
     json_serialize_buffer(json, buffer);
 
-    result = invoke(thread, "downloadExtract", buffer_get_buffer(buffer));
-    printExtracted(result);
-
-    json_delete(json);
-    json = json_new();
+    //result = invoke(thread, "downloadExtract", buffer_get_buffer(buffer));
+    //printExtracted(result);
 
     // Third call
+    json_clear(json);
     json_add_string(json, "service", "YouTube");
     json_add_string(json, "query", "Sailfis");
     json_serialize_buffer(json, buffer);
 
     result = invoke(thread, "getSuggestions", buffer_get_buffer(buffer));
     printf("Suggestion results: \n%s\n", result);
+
+    // Fourth call
+    json_clear(json);
+    json_add_string(json, "service", "YouTube");
+    json_add_string(json, "searchString", "Sailish OS");
+
+    list = jsonlist_new();
+    jsonlist_push_string(list, "all");
+    json_add_list(json, "contentFilter", list);
+
+    json_add_string(json, "sortFilter", "");
+
+    json_serialize_buffer(json, buffer);
+    printf("Search input: \n%s\n", buffer_get_buffer(buffer));
+
+    result = invoke(thread, "searchFor", buffer_get_buffer(buffer));
+    printf("Search output: \n%s\n", result);
+
+    exit(0);
+    json_clear(json);
+    json_deserialize_string(json, result, strlen(result));
+
+    Json* nextPage = json_get_dict(json, "nextPage");
+    json_print(nextPage);
+    Buffer* nextPageString = buffer_new(1024);
+    json_serialize_buffer(nextPage, nextPageString);
+
+    nextPage = json_new();
+    json_deserialize_buffer(nextPage, nextPageString);
+
+    // Fifth call
+    json_clear(json);
+    json_add_string(json, "service", "YouTube");
+    json_add_string(json, "searchString", "Sailish OS");
+
+    list = jsonlist_new();
+    jsonlist_push_string(list, "all");
+    json_add_list(json, "contentFilter", list);
+
+    json_add_string(json, "sortFilter", "");
+
+    json_add_dict(json, "page", nextPage);
+
+    json_serialize_buffer(json, buffer);
+    printf("Search input: \n%s\n", buffer_get_buffer(buffer));
+
+    result = invoke(thread, "getMoreSearchItems", buffer_get_buffer(buffer));
+    printf("Search output: \n%s\n", result);
+
+
+
 
     json_delete(json);
     buffer_delete(buffer);    
