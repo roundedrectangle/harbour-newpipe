@@ -64,6 +64,8 @@ typedef enum _JSONTYPE {
 	JSONTYPE_STRING,
 	JSONTYPE_DECIMAL,
 	JSONTYPE_INTEGER,
+	JSONTYPE_BOOL,
+	JSONTYPE_NULL,
 	JSONTYPE_LIST,
 	JSONTYPE_DICT,
 
@@ -87,6 +89,8 @@ void json_add_string(Json * json, char const * key, char const * value);
 void json_add_buffer(Json * json, char const * key, Buffer const * value);
 void json_add_decimal(Json * json, char const * key, double value);
 void json_add_integer(Json * json, char const * key, long long int value);
+void json_add_bool(Json * json, char const * key, bool value);
+void json_add_null(Json * json, char const * key);
 void json_add_dict(Json * json, char const * key, Json * dict);
 void json_add_list(Json * json, char const * key, JsonList * list);
 
@@ -103,6 +107,7 @@ char const * json_get_string(Json * json, char const * key);
 double json_get_decimal(Json * json, char const * key);
 long long int json_get_integer(Json * json, char const * key);
 double json_get_number(Json * json, char const * key);
+bool json_get_bool(Json * json, char const * key);
 Json * json_get_dict(Json * json, char const * key);
 JsonList * json_get_list(Json * json, char const * key);
 
@@ -114,6 +119,8 @@ void jsonlist_push_string(JsonList * jsonlist, char const * value);
 void jsonlist_push_buffer(JsonList * jsonlist, Buffer const * value);
 void jsonlist_push_decimal(JsonList * jsonlist, double value);
 void jsonlist_push_integer(JsonList * jsonlist, long long int value);
+void jsonlist_push_bool(JsonList * jsonlist, bool value);
+void jsonlist_push_null(JsonList * jsonlist);
 void jsonlist_push_dict(JsonList * jsonlist, Json * value);
 void jsonlist_push_list(JsonList * jsonlist, JsonList * value);
 
@@ -123,10 +130,9 @@ char const * jsonlist_get_string(JsonList * jsonlist, size_t index);
 double jsonlist_get_decimal(JsonList * jsonlist, size_t index);
 long long int jsonlist_get_integer(JsonList * jsonlist, size_t index);
 double jsonlist_get_number(JsonList * jsonlist, size_t index);
+bool jsonlist_get_bool(JsonList * jsonlist, size_t index);
 Json * jsonlist_get_dict(JsonList * jsonlist, size_t index);
 JsonList * jsonlist_get_list(JsonList * jsonlist, size_t index);
-
-
 
 // Function definitions
 

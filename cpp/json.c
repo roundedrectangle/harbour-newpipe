@@ -79,6 +79,7 @@ struct _KeyValues {
 	Json * value_dict;
 	double value_decimal;
 	long long int value_int;
+	bool value_bool;
 	JsonList * value_list;
 
 	KeyValues * next;
@@ -92,6 +93,7 @@ struct _Values {
 	Json * value_dict;
 	double value_decimal;
 	long long int value_int;
+	bool value_bool;
 	JsonList * value_list;
 
 	Values * next;
@@ -189,11 +191,15 @@ static KeyValues * keyvalues_add_string(KeyValues * keyvalues, char const * key,
 static KeyValues * keyvalues_add_buffer(KeyValues * keyvalues, char const * key, Buffer const * value);
 static KeyValues * keyvalues_add_decimal(KeyValues * keyvalues, char const * key, double value);
 static KeyValues * keyvalues_add_integer(KeyValues * keyvalues, char const * key, long long int value);
+static KeyValues * keyvalues_add_bool(KeyValues * keyvalues, char const * key, bool value);
+static KeyValues * keyvalues_add_null(KeyValues * keyvalues, char const * key);
 static KeyValues * keyvalues_add_dict(KeyValues * keyvalues, char const * key, Json * value);
 static KeyValues * keyvalues_add_list(KeyValues * keyvalues, char const * key, JsonList * value);
 
 static KeyValues * keyvalues_find(KeyValues * keyvalues, char const * key);
 static bool keyvalues_readnumber(KeyValues * keyvalues, char const * start, char const * end);
+static bool keyvalues_readbool(KeyValues * keyvalues, char const * start, char const * end);
+static bool keyvalues_readnull(KeyValues * keyvalues, char const * start, char const * end);
 static char * keyvalues_unescape(char const * start, char const * end);
 static size_t keyvalues_escape(char * output, size_t size, char const * unescaped);
 
@@ -202,6 +208,8 @@ static void values_delete(Values * values);
 static void values_clear(Values * values);
 static void jsonlist_push(JsonList * jsonlist, Values * values);
 static bool values_readnumber(Values * values, char const * start, char const * end);
+static bool values_readbool(Values * values, char const * start, char const * end);
+static bool values_readnull(Values * values, char const * start, char const * end);
 static size_t jsonlist_deserialize(JsonList ** jsonlist, char const * json_string, size_t length, bool * error);
 static size_t jsonlist_serialize_size(JsonList * jsonlist);
 static size_t jsonlist_serialize(JsonList * jsonlist, char * buffer, size_t size);
@@ -283,6 +291,29 @@ void json_add_decimal(Json * json, char const * key, double value) {
  */
 void json_add_integer(Json * json, char const * key, long long int value) {
 	json->keyvalues = keyvalues_add_integer(json->keyvalues, key, value);
+}
+
+/**
+ * Add a key-value pair to the data items where the value is of boolean type.
+ * As a boolean, json_get_type() will return JSONTYPE_BOOL for this item.
+ *
+ * @param json The json object
+ * @param key Null-terminated string representing the key
+ * @param value The integer value to store against the key
+ */
+void json_add_bool(Json * json, char const * key, bool value) {
+	json->keyvalues = keyvalues_add_bool(json->keyvalues, key, value);
+}
+
+/**
+ * Add a key-value pair to the data items where the value is of null type.
+ * As a null value, json_get_type() will return JSONTYPE_NULL for this item.
+ *
+ * @param json The json object
+ * @param key Null-terminated string representing the key
+ */
+void json_add_null(Json * json, char const * key) {
+	json->keyvalues = keyvalues_add_null(json->keyvalues, key);
 }
 
 /**
@@ -651,6 +682,7 @@ static size_t keyvalues_deserialize(KeyValues ** keyvalues, char const * json_st
 					case '{':
 						// We've found an open bracket, so this is a dict. Recurse.
 						current->type = JSONTYPE_DICT;
+						current->value_dict = json_new();
 						consume_start += keyvalues_deserialize(& current->value_dict->keyvalues, consume_start, length - (consume_end - consume_start), error);
 						consume_end = consume_start;
 						state = DESERSTATE_POSTVALUE;
@@ -736,6 +768,12 @@ static size_t keyvalues_deserialize(KeyValues ** keyvalues, char const * json_st
 					case '\r':
 						// Read in the number (could be decimal or integer)
 						result = keyvalues_readnumber(current, consume_start, consume_end);
+						if (!result) {
+							result = keyvalues_readbool(current, consume_start, consume_end);
+						}
+						if (!result) {
+							result = keyvalues_readnull(current, consume_start, consume_end);
+						}
 						if (result == true) {
 							consume_start = consume_end;
 							state = DESERSTATE_POSTVALUE;
@@ -879,6 +917,76 @@ static bool keyvalues_readnumber(KeyValues * keyvalues, char const * start, char
 }
 
 /**
+ * Internal function that reads in a bool and stores the result in the
+ * previously allocated KeyValues structure.
+ *
+ * The function figures out if the value is a bool. If it's not a valid bool,
+ * no value is stored and the function returns false.
+ *
+ * The possible values are "true" and "false" (without quotes) case-sensitive.
+ *
+ * @param keyvalues An already allocated KeyValues structure to store the
+ *        result in.
+ * @param start The start of the string to read in.
+ * @param end The end of the string to read in.
+ * @return True if the string represents a valid bool, false o/w.
+ */
+static bool keyvalues_readbool(KeyValues * keyvalues, char const * start, char const * end) {
+	bool result;
+	bool readbool;
+
+	result = false;
+
+	if ((end - start) == (sizeof("true") - 1) && (strncmp(start, "true", (sizeof("true") - 1)) == 0)) {
+		result = true;
+		readbool = true;
+	}
+
+	if ((!result) && (end - start) == (sizeof("false") - 1) && (strncmp(start, "false", (sizeof("false") - 1)) == 0)) {
+		result = true;
+		readbool = false;
+	}
+
+	if (result) {
+		keyvalues->type = JSONTYPE_BOOL;
+		keyvalues->value_int = readbool;
+	}
+
+	return result;
+}
+
+/**
+ * Internal function that reads in a null and stores the result in the
+ * previously allocated KeyValues structure.
+ *
+ * The function figures out if the value is a null. If it's not a valid null,
+ * no value is stored and the function returns false.
+ *
+ * The possible value is "null" (without quotes) case-sensitive.
+ *
+ * @param keyvalues An already allocated KeyValues structure to store the
+ *        result in.
+ * @param start The start of the string to read in.
+ * @param end The end of the string to read in.
+ * @return True if the string represents a valid null, false o/w.
+ */
+static bool keyvalues_readnull(KeyValues * keyvalues, char const * start, char const * end) {
+	bool result;
+
+	result = false;
+
+	if ((end - start) == (sizeof("null") - 1) && (strncmp(start, "null", (sizeof("null") - 1)) == 0)) {
+		result = true;
+	}
+
+	if (result) {
+		keyvalues->type = JSONTYPE_NULL;
+	}
+
+	return result;
+}
+
+/**
  * Internal function that reads in a number and stores the result in the
  * previously allocated Values structure.
  *
@@ -926,6 +1034,73 @@ static bool values_readnumber(Values * values, char const * start, char const * 
 	return result;
 }
 
+/**
+ * Internal function that reads in a bool and stores the result in the
+ * previously allocated Values structure.
+ *
+ * The function figures out if the value is a bool. If it's not a valid bool,
+ * no value is stored and the function returns false.
+ *
+ * The possible values are "true" and "false" (without quotes) case-sensitive.
+ *
+ * @param values An already allocated Kalues structure to store the result in.
+ * @param start The start of the string to read in.
+ * @param end The end of the string to read in.
+ * @return True if the string represents a valid bool, false o/w.
+ */
+static bool values_readbool(Values * values, char const * start, char const * end) {
+	bool result;
+	bool readbool;
+
+	result = false;
+
+	if ((end - start) == (sizeof("true") - 1) && (strncmp(start, "true", (sizeof("true") - 1)) == 0)) {
+		result = true;
+		readbool = true;
+	}
+
+	if ((!result) && (end - start) == (sizeof("false") - 1) && (strncmp(start, "false", (sizeof("false") - 1)) == 0)) {
+		result = true;
+		readbool = false;
+	}
+
+	if (result) {
+		values->type = JSONTYPE_BOOL;
+		values->value_int = readbool;
+	}
+
+	return result;
+}
+
+/**
+ * Internal function that reads in a null and stores the result in the
+ * previously allocated Values structure.
+ *
+ * The function figures out if the value is a null. If it's not a valid null,
+ * no value is stored and the function returns false.
+ *
+ * The possible value is "null" (without quotes) case-sensitive.
+ *
+ * @param values An already allocated Kalues structure to store the result in.
+ * @param start The start of the string to read in.
+ * @param end The end of the string to read in.
+ * @return True if the string represents a valid null, false o/w.
+ */
+static bool values_readnull(Values * values, char const * start, char const * end) {
+	bool result;
+
+	result = false;
+
+	if ((end - start) == (sizeof("null") - 1) && (strncmp(start, "null", (sizeof("null") - 1)) == 0)) {
+		result = true;
+	}
+
+	if (result) {
+		values->type = JSONTYPE_NULL;
+	}
+
+	return result;
+}
 
 /**
  * Internal function that takes in a string and returns a newly allocated copy
@@ -1160,6 +1335,14 @@ static size_t keyvalues_serialize_size(KeyValues * keyvalues) {
 				// Integer value without quotes
 				size += snprintf(NULL, 0, JSON_INT_FORMAT, pos->value_int);
 				break;
+			case JSONTYPE_BOOL:
+				// Bool value without quotes
+				size += pos->value_bool ? (sizeof("true") - 1) : (sizeof("false") - 1);
+				break;
+			case JSONTYPE_NULL:
+				// Null value without quotes
+				size += (sizeof("null") - 1);
+				break;
 			case JSONTYPE_DICT:
 				// Dict without quotes
 				size += json_serialize_size(pos->value_dict);
@@ -1220,6 +1403,14 @@ static size_t keyvalues_serialize(KeyValues * keyvalues, char * buffer, size_t s
 				// Integer value without quotes
 				used += snprintf(buffer + used, size - used, JSON_INT_FORMAT, pos->value_int);
 				break;
+			case JSONTYPE_BOOL:
+				// Bool value without quotes
+				used += snprintf(buffer + used, size - used, "%s", pos->value_bool ? "true" : "false");
+				break;
+			case JSONTYPE_NULL:
+				// Null value without quotes
+				used += snprintf(buffer + used, size - used, "%s", "null");
+				break;
 			case JSONTYPE_DICT:
 				// Dict without quotes
 				used += json_serialize(pos->value_dict, buffer + used, size - used);
@@ -1265,6 +1456,14 @@ static size_t jsonlist_serialize_size(JsonList * jsonlist) {
 			case JSONTYPE_INTEGER:
 				// Integer value without quotes
 				size += snprintf(NULL, 0, JSON_INT_FORMAT, pos->value_int);
+				break;
+			case JSONTYPE_BOOL:
+				// Bool value without quotes
+				size += pos->value_bool ? (sizeof("true") - 1) : (sizeof("false") - 1);
+				break;
+			case JSONTYPE_NULL:
+				// Null value without quotes
+				size += (sizeof("null") - 1);
 				break;
 			case JSONTYPE_DICT:
 				// Dict without quotes
@@ -1313,6 +1512,14 @@ static size_t jsonlist_serialize(JsonList * jsonlist, char * buffer, size_t size
 			case JSONTYPE_INTEGER:
 				// Integer value without quotes
 				used += snprintf(buffer + used, size - used, JSON_INT_FORMAT, pos->value_int);
+				break;
+			case JSONTYPE_BOOL:
+				// Bool value without quotes
+				used += snprintf(buffer + used, size - used, "%s", pos->value_bool ? "true" : "false");
+				break;
+			case JSONTYPE_NULL:
+				// Null value without quotes
+				used += snprintf(buffer + used, size - used, "%s", "true");
 				break;
 			case JSONTYPE_DICT:
 				// Dict without quotes
@@ -1495,6 +1702,59 @@ static KeyValues * keyvalues_add_integer(KeyValues * keyvalues, char const * key
 
 /**
  * Internal function for adding a key-value pair to the list where the value
+ * is of type integer.
+ *
+ * @param keyvalues The head of the list to add the value to
+ * @param key The null-terminated key to add
+ * @param value The integer to be associated with the key
+ * @return The new head of the list
+ */
+static KeyValues * keyvalues_add_bool(KeyValues * keyvalues, char const * key, bool value) {
+	KeyValues * position;
+
+	position = keyvalues_find(keyvalues, key);
+	if (position) {
+		keyvalues_clear(position);
+	}
+	else {
+		position = keyvalues_new(key);
+		position->next = keyvalues;
+		keyvalues = position;
+	}
+	position->value_bool = value;
+	position->type = JSONTYPE_BOOL;
+
+	return keyvalues;
+}
+
+/**
+ * Internal function for adding a key-value pair to the list where the value
+ * is of type integer.
+ *
+ * @param keyvalues The head of the list to add the value to
+ * @param key The null-terminated key to add
+ * @param value The integer to be associated with the key
+ * @return The new head of the list
+ */
+static KeyValues * keyvalues_add_null(KeyValues * keyvalues, char const * key) {
+	KeyValues * position;
+
+	position = keyvalues_find(keyvalues, key);
+	if (position) {
+		keyvalues_clear(position);
+	}
+	else {
+		position = keyvalues_new(key);
+		position->next = keyvalues;
+		keyvalues = position;
+	}
+	position->type = JSONTYPE_NULL;
+
+	return keyvalues;
+}
+
+/**
+ * Internal function for adding a key-value pair to the list where the value
  * is a dict of key-value pairsl.
  *
  * @param keyvalues The head of the list to add the value to
@@ -1604,7 +1864,7 @@ double json_get_decimal(Json * json, char const * key) {
 }
 
 /**
- * Return the ingeter value associated with a given key. If the key doesn't
+ * Return the integer value associated with a given key. If the key doesn't
  * exist, or it exists but isn't of type integer, then 0 will be returned.
  *
  * @param json The json object to search
@@ -1657,6 +1917,28 @@ double json_get_number(Json * json, char const * key) {
 				break;
 			}
 		}
+	}
+
+	return result;
+}
+
+/**
+ * Return the boolean value associated with a given key. If the key doesn't
+ * exist, or it exists but isn't of type bool, then false will be returned.
+ *
+ * @param json The json object to search
+ * @param key The key to search for
+ * @return The boolean associated with the key if it exists, or false otherwise
+ */
+bool json_get_bool(Json * json, char const * key) {
+	KeyValues * position;
+	bool result;
+
+	position = keyvalues_find(json->keyvalues, key);
+
+	result = false;
+	if ((position != NULL) && (position->type == JSONTYPE_BOOL)) {
+		result = position->value_bool;
 	}
 
 	return result;
@@ -1836,6 +2118,25 @@ void jsonlist_push_integer(JsonList * jsonlist, long long int value) {
 	jsonlist_push(jsonlist, values);
 }
 
+void jsonlist_push_bool(JsonList * jsonlist, bool value) {
+	Values * values;
+
+	values = values_new();
+	values->value_bool = value;
+	values->type = JSONTYPE_BOOL;
+
+	jsonlist_push(jsonlist, values);
+}
+
+void jsonlist_push_null(JsonList * jsonlist) {
+	Values * values;
+
+	values = values_new();
+	values->type = JSONTYPE_NULL;
+
+	jsonlist_push(jsonlist, values);
+}
+
 void jsonlist_push_dict(JsonList * jsonlist, Json * value) {
 	Values * values;
 
@@ -1924,6 +2225,19 @@ long long int jsonlist_get_integer(JsonList * jsonlist, size_t index) {
 	values = jsonlist_get_index(jsonlist, index);
 	if (values && (values->type == JSONTYPE_DECIMAL)) {
 		value = values->value_int;
+	}
+
+	return value;
+}
+
+bool jsonlist_get_bool(JsonList * jsonlist, size_t index) {
+	Values * values;
+	bool value;
+
+	value = false;
+	values = jsonlist_get_index(jsonlist, index);
+	if (values && (values->type == JSONTYPE_BOOL)) {
+		value = values->value_bool;
 	}
 
 	return value;
@@ -2060,6 +2374,7 @@ static size_t jsonlist_deserialize(JsonList ** jsonlist, char const * json_strin
 					case '{':
 						// We've found an open bracket, so this is a dict.
 						current->type = JSONTYPE_DICT;
+						current->value_dict = json_new();
 						consume_start += keyvalues_deserialize(& current->value_dict->keyvalues, consume_start, length - (consume_end - consume_start), error);
 						consume_end = consume_start;
 						state = LISTSTATE_POSTVALUE;
@@ -2150,6 +2465,12 @@ static size_t jsonlist_deserialize(JsonList ** jsonlist, char const * json_strin
 					case '\r':
 						// Read in the number (could be decimal or integer)
 						result = values_readnumber(current, consume_start, consume_end);
+						if (!result) {
+							result = values_readbool(current, consume_start, consume_end);
+						}
+						if (!result) {
+							result = values_readnull(current, consume_start, consume_end);
+						}
 						if (result == true) {
 							consume_start = consume_end;
 							state = LISTSTATE_POSTVALUE;
