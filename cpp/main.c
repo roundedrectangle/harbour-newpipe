@@ -6,7 +6,7 @@
 
 #include "appwrapper.h"
 
-Json* extract_next_page(Json* json) {
+Json* extract_next_page(Json * json) {
     Json* parsePage;
     Json* nextPage;
     char const* string;
@@ -125,6 +125,54 @@ void getFilter(graal_isolatethread_t* thread, char const* const service, Buffer 
     json_delete(json);
 }
 
+void display_metadata(graal_isolatethread_t* thread, Json* json, char const* const key, size_t count, size_t selection) {
+    JsonList* list;
+    JsonList* metaInfo;
+    size_t metaInfoLength;
+
+    list = json_get_list(json, key);
+
+    size_t length = jsonlist_get_len(list);
+
+    if ((selection <= count) || (selection > count + length)) {
+        printf("Select falls outside bounds (must be between %lu and %lu inclusive)\n", count + 1, (count + length));
+    }
+    else {
+        Json* item = jsonlist_get_dict(list, selection - count - 1);
+        char const* name = json_get_string(item, "name");
+        printf("Title: %s\n", name);
+        json_print(item);
+
+        metaInfo = json_get_list(json, "metaInfo");
+        printf("Metadata: %p\n", metaInfo);
+        metaInfoLength = jsonlist_get_len(metaInfo);
+        printf("Metadata length: %lu\n", metaInfoLength);
+    }
+}
+
+void get_search_results(graal_isolatethread_t* thread, Json* json, char const* const service, char const* const searchString, char const* const filter, Json* nextPage) {
+    Buffer* buffer;
+    char* result;
+
+    buffer = buffer_new(1024);
+
+    // Populate the JSON input parameter structure
+    create_search_structure(json, service, searchString, filter, nextPage);
+    json_serialize_buffer(json, buffer);
+
+    // Call the Extractor
+    if (!nextPage) {
+        result = invoke(thread, "searchFor", buffer_get_buffer(buffer));
+    } else {
+        result = invoke(thread, "getMoreSearchItems", buffer_get_buffer(buffer));
+    }
+
+    json_clear(json);
+    json_deserialize_string(json, result, strlen(result));
+
+    buffer_delete(buffer);
+}
+
 void search(graal_isolatethread_t* thread, char const* const service) {
     char* input;
     char* searchString;
@@ -133,69 +181,64 @@ void search(graal_isolatethread_t* thread, char const* const service) {
     Buffer* filter;
     char* result;
     Json* nextPage;
+    size_t startCount;
     size_t count;
+    size_t selection;
+    int successCount;
+    char* key;
 
     json = json_new();
     buffer = buffer_new(1024);
     filter = buffer_new(64);
+    nextPage = NULL;
+    input = "c";
 
     getFilter(thread, service, filter);
 
     printf("\n");
     printf("Search %s\n", service);
     searchString = readline("Please enter a search phrase (or leave blank to return): ");
-    printf("Searching for: \"%s\"\n", searchString);
 
-    if (searchString[0] != 0) {
-        // Populate the JSON input parameter structure
-        create_search_structure(json, service, searchString, buffer_get_buffer(filter), NULL);
-        json_serialize_buffer(json, buffer);
+    // Display the results
+    count = 0;
+    startCount = count;
+    key = "relatedItems";
 
-        // Call the Extractor
-        result = invoke(thread, "searchFor", buffer_get_buffer(buffer));
+    while ((searchString[0] != 0) && (strcmp(input, "c") == 0)) {
+        printf("Searching for: \"%s\"\n", searchString);
 
-        json_clear(json);
-        json_deserialize_string(json, result, strlen(result));
+        get_search_results(thread, json, service, searchString, buffer_get_buffer(filter), nextPage);
         nextPage = extract_next_page(json);
 
         // Display the results
-        count = 0;
-        count += display_search_results(json, "relatedItems", 0);
+        startCount = count;
+        count += display_search_results(json, key, count);
+
+        printf("\n");
 
         if (json_get_type(nextPage, "url") == JSONTYPE_STRING) {
-            printf("\n");
-            input = readline("Enter \"c\" to continue or leave blank to return: ");
-            while (strcmp(input, "c") == 0) {
-                printf("Continue searching for: \"%s\"\n", searchString);
-
-                // Populate the JSON input parameter structure
-                create_search_structure(json, service, searchString, buffer_get_buffer(filter), nextPage);
-                json_serialize_buffer(json, buffer);
-
-                // Call the Extractor
-                result = invoke(thread, "getMoreSearchItems", buffer_get_buffer(buffer));
-
-                // The following will delete nextPage along with json
-                json_clear(json);
-                json_deserialize_string(json, result, strlen(result));
-                nextPage = extract_next_page(json);
-
-                // Display the results
-                count += display_search_results(json, "itemsList", count);
-
-                printf("\n");
-                input = readline("Enter \"c\" to continue or leave blank to return: ");
-            }
+            printf("Enter \"c\" to continue.\n");
         }
         else {
             printf("No more results\n\n");
+            searchString = "";
         }
 
-        buffer_delete(filter);
-        buffer_delete(buffer);
-        json_delete(nextPage);
-        json_delete(json);
+        printf("Enter a number to select an entry.\n");
+        input = readline("Leave blank to return: ");
+
+        successCount = sscanf(input, "%lu", &selection);
+        if (successCount == 1) {
+            display_metadata(thread, json, key, startCount, selection);
+            input = "c";
+        }
+        key = "itemsList";
     }
+
+    buffer_delete(filter);
+    buffer_delete(buffer);
+    json_delete(nextPage);
+    json_delete(json);
 }
 
 char const* select_service() {
