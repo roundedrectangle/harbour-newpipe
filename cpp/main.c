@@ -6,6 +6,8 @@
 
 #include "appwrapper.h"
 
+#define SERVICE_NUM (5)
+
 Json* extract_next_page(Json * json) {
     Json* parsePage;
     Json* nextPage;
@@ -125,10 +127,27 @@ void getFilter(graal_isolatethread_t* thread, char const* const service, Buffer 
     json_delete(json);
 }
 
-void display_metadata(graal_isolatethread_t* thread, Json* json, char const* const key, size_t count, size_t selection) {
+void get_item_info(graal_isolatethread_t* thread, char const* service, char const* url, Json * json) {
+    char* result;
+    Buffer* buffer;
+
+    buffer = buffer_new(1024);
+    json_clear(json);
+    json_add_string(json, "service", service);
+    json_add_string(json, "url", url);
+
+    json_serialize_buffer(json, buffer);
+    result = invoke(thread, "downloadExtract", buffer_get_buffer(buffer));
+
+    buffer_delete(buffer);
+    json_deserialize_string(json, result, strlen(result));
+}
+
+void display_metadata(graal_isolatethread_t* thread, Json* json, char const* const service, char const* const key, size_t count, size_t selection) {
     JsonList* list;
     JsonList* metaInfo;
     size_t metaInfoLength;
+    Json* params;
 
     list = json_get_list(json, key);
 
@@ -140,13 +159,30 @@ void display_metadata(graal_isolatethread_t* thread, Json* json, char const* con
     else {
         Json* item = jsonlist_get_dict(list, selection - count - 1);
         char const* name = json_get_string(item, "name");
+        printf("\n");
         printf("Title: %s\n", name);
-        json_print(item);
 
-        metaInfo = json_get_list(json, "metaInfo");
-        printf("Metadata: %p\n", metaInfo);
-        metaInfoLength = jsonlist_get_len(metaInfo);
-        printf("Metadata length: %lu\n", metaInfoLength);
+        params = json_new();
+
+        char const* url = json_get_string(item, "url");
+        printf("Service: %s\n", service);
+
+        // Returns DownloadExtracted
+        get_item_info(thread, service, url, params);
+
+        char const* uploaderName = json_get_string(params, "uploaderName");
+        char const* category = json_get_string(params, "category");
+        long long int likeCount = json_get_integer(params, "likeCount");
+        long long int viewCount = json_get_integer(params, "viewCount");
+        char const* content = json_get_string(params, "content");
+
+        printf("Uploader: %s\n", uploaderName);
+        printf("Category: %s\n", category);
+        printf("Like count: %llu\n", likeCount);
+        printf("View count: %llu\n", viewCount);
+        printf("\n");
+
+        json_delete(params);
     }
 }
 
@@ -186,6 +222,7 @@ void search(graal_isolatethread_t* thread, char const* const service) {
     size_t selection;
     int successCount;
     char* key;
+    bool repeat;
 
     json = json_new();
     buffer = buffer_new(1024);
@@ -203,12 +240,15 @@ void search(graal_isolatethread_t* thread, char const* const service) {
     count = 0;
     startCount = count;
     key = "relatedItems";
+    repeat = false;
 
     while ((searchString[0] != 0) && (strcmp(input, "c") == 0)) {
         printf("Searching for: \"%s\"\n", searchString);
 
-        get_search_results(thread, json, service, searchString, buffer_get_buffer(filter), nextPage);
-        nextPage = extract_next_page(json);
+        if (!repeat) {
+            get_search_results(thread, json, service, searchString, buffer_get_buffer(filter), nextPage);
+            nextPage = extract_next_page(json);
+        }
 
         // Display the results
         startCount = count;
@@ -229,10 +269,14 @@ void search(graal_isolatethread_t* thread, char const* const service) {
 
         successCount = sscanf(input, "%lu", &selection);
         if (successCount == 1) {
-            display_metadata(thread, json, key, startCount, selection);
+            display_metadata(thread, json, service, key, startCount, selection);
             input = "c";
+            repeat = true;
+            count = startCount;
         }
-        key = "itemsList";
+        else {
+            key = "itemsList";
+        }
     }
 
     buffer_delete(filter);
@@ -249,12 +293,12 @@ char const* select_service() {
         "SoundCloud",
         "YouTube"
     };
+    size_t const length = sizeof(services) / sizeof(services[0]);
     size_t index;
     char* input;
     size_t service;
     size_t converted;
     char const* serviceName;
-    size_t const length = sizeof(services) / sizeof(services[0]);
 
     serviceName = NULL;
     converted = 0;
