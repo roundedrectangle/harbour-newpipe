@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <spawn.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <readline/readline.h>
 #include <curl/curl.h>
 #include "json.h"
@@ -13,6 +16,9 @@
 char const* minetype_to_extension(char const* mimetype) {
     char* mapping[][2]= {
         {"video/mp4", "mp4"},
+        {"audio/mpegurl", "m3u"},
+        {"audio/mpeg", "mpga"},
+        {"application/x-bittorrent", "torrent"},
         {"", "dat"}
     };
     size_t length = sizeof(mapping) / sizeof(mapping[0]);
@@ -212,6 +218,8 @@ void download_file(char const* const url, char const* const name) {
     Buffer* filename;
     char* contentType;
     char const* extension;
+    long int responseCode;
+    long int redirectCount;
 
     printf("Downloading: %s\n", url);
     printf("\n");
@@ -222,9 +230,20 @@ void download_file(char const* const url, char const* const name) {
     if (curl) {
         output = fopen("./downloads/download.dat", "wb");
         curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, download_write);
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, output);
         result = curl_easy_perform(curl);
+
+        result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+        if (result == CURLE_OK) {
+            printf("Response code: %ld\n", responseCode);
+        }
+
+        result = curl_easy_getinfo(curl, CURLINFO_REDIRECT_COUNT , &redirectCount);
+        if (result == CURLE_OK) {
+            printf("Redirect count: %ld\n", redirectCount);
+        }
 
         extension = "dat";
         if (result == CURLE_OK) {
@@ -241,6 +260,7 @@ void download_file(char const* const url, char const* const name) {
         sanitise_name(filename, extension);
         rename("./downloads/download.dat", buffer_get_buffer(filename));
         printf("File saved to: %s\n", buffer_get_buffer(filename));
+        printf("\n");
         buffer_delete(filename);
 
         curl_easy_cleanup(curl);
@@ -249,7 +269,31 @@ void download_file(char const* const url, char const* const name) {
 }
 
 void open_file(char const* const url) {
+    char* argv[3];
+    int status;
+    extern char **environ;
+
     printf("Opening: %s\n", url);
+    printf("\n");
+
+    posix_spawn_file_actions_t action;
+    posix_spawn_file_actions_init(&action);
+    posix_spawn_file_actions_addopen(&action, STDERR_FILENO, "/dev/null", O_WRONLY | O_APPEND, 0);
+
+    argv[0] = "xdg-open";
+    argv[1] = strdup(url);
+    argv[2] = 0;
+    status = posix_spawnp(NULL, "xdg-open", &action, NULL, argv, environ);
+
+    posix_spawn_file_actions_destroy(&action);
+    free(argv[1]);
+
+    if (status == 0) {
+        printf("Opened\n");
+    }
+    else {
+        printf("Open failed\n");
+    }
     printf("\n");
 }
 
