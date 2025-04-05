@@ -1,12 +1,70 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <readline/readline.h>
+#include <curl/curl.h>
 #include "json.h"
 
 #include "appwrapper.h"
 
 #define SERVICE_NUM (5)
+
+char const* minetype_to_extension(char const* mimetype) {
+    char* mapping[][2]= {
+        {"video/mp4", "mp4"},
+        {"", "dat"}
+    };
+    size_t length = sizeof(mapping) / sizeof(mapping[0]);
+    size_t index;
+    char const* result;
+
+    result = NULL;
+    index = 0;
+    while ((!result) && (index < length)) {
+        if ((strcmp(mimetype, mapping[index][0]) == 0) || (mapping[index][0][0] == 0)) {
+            result = mapping[index][1];
+        }
+        ++index;
+    }
+    return result;
+}
+
+void sanitise_name(Buffer* buffer, char const* const extension) {
+    Buffer* result;
+    size_t length;
+    size_t index;
+    char character;
+
+    length = buffer_get_pos(buffer);
+    if (length > 20) {
+        length = 20;
+    }
+
+    result = buffer_new(length + strlen(extension) + 1);
+    buffer_append_string(result, "./downloads/");
+
+    for (index = 0; index < length; ++index) {
+        character = buffer_get_buffer(buffer)[index];
+        if (((character >= 'a') && (character <= 'z'))
+            || ((character >= 'A') && (character <= 'Z'))
+            || ((character >= '0') && (character <= '9'))) {
+            buffer_append(result, &character, 1);
+        }
+        if (character == ' ') {
+            buffer_append(result, &"_", 1);
+        }
+    }
+    if (buffer_get_pos(result) < 3) {
+        buffer_append_string(result, "media");
+    }
+    buffer_append_string(result, ".");
+    buffer_append_string(result, extension);
+
+    buffer_clear(buffer);
+    buffer_append_buffer(buffer, result);
+    buffer_delete(result);
+}
 
 Json* extract_next_page(Json * json) {
     Json* parsePage;
@@ -143,11 +201,65 @@ void get_item_info(graal_isolatethread_t* thread, char const* service, char cons
     json_deserialize_string(json, result, strlen(result));
 }
 
+size_t download_write(void* ptr, size_t size, size_t nmemb, FILE* userdata) {
+    return fwrite(ptr, size, nmemb, userdata);
+}
+
+void download_file(char const* const url, char const* const name) {
+    CURL* curl;
+    FILE* output;
+    CURLcode result;
+    Buffer* filename;
+    char* contentType;
+    char const* extension;
+
+    printf("Downloading: %s\n", url);
+    printf("\n");
+
+    mkdir("./downloads", 0777);
+
+    curl = curl_easy_init();
+    if (curl) {
+        output = fopen("./downloads/download.dat", "wb");
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, download_write);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, output);
+        result = curl_easy_perform(curl);
+
+        extension = "dat";
+        if (result == CURLE_OK) {
+            result = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &contentType);
+        }
+        if (result == CURLE_OK) {
+            printf("Content type: %s\n", contentType);
+            extension = minetype_to_extension(contentType);
+            printf("Extension: %s\n", extension);
+        }
+
+        filename = buffer_new(1024);
+        buffer_append_string(filename, name);
+        sanitise_name(filename, extension);
+        rename("./downloads/download.dat", buffer_get_buffer(filename));
+        printf("File saved to: %s\n", buffer_get_buffer(filename));
+        buffer_delete(filename);
+
+        curl_easy_cleanup(curl);
+        fclose(output);
+    }
+}
+
+void open_file(char const* const url) {
+    printf("Opening: %s\n", url);
+    printf("\n");
+}
+
 void display_metadata(graal_isolatethread_t* thread, Json* json, char const* const service, char const* const key, size_t count, size_t selection) {
     JsonList* list;
     JsonList* metaInfo;
     size_t metaInfoLength;
     Json* params;
+    bool valid;
+    char* action;
 
     list = json_get_list(json, key);
 
@@ -181,6 +293,33 @@ void display_metadata(graal_isolatethread_t* thread, Json* json, char const* con
         printf("Like count: %llu\n", likeCount);
         printf("View count: %llu\n", viewCount);
         printf("\n");
+
+        valid = true;
+        while (valid) {
+            valid = true;
+            printf("Enter \"d\" to download the media file.\n");
+            printf("Enter \"o\" to open the file.\n");
+            action = readline("Leave blank to return: ");
+            switch (action[0]) {
+                case 'd': {
+                    download_file(content, name);
+                    break;
+                }
+                case 'o': {
+                    open_file(content);
+                    break;
+                }
+                case 0: {
+                    // Leave the loop
+                    valid = false;
+                    break;
+                }
+                default: {
+                    // Go around the loop again
+                    break;
+                }
+            }
+        }
 
         json_delete(params);
     }
@@ -234,7 +373,8 @@ void search(graal_isolatethread_t* thread, char const* const service) {
 
     printf("\n");
     printf("Search %s\n", service);
-    searchString = readline("Please enter a search phrase (or leave blank to return): ");
+    printf("Enter a search phrase\n");
+    searchString = readline("Leave blank to return: ");
 
     // Display the results
     count = 0;
@@ -308,9 +448,11 @@ char const* select_service() {
         for (index = 0; index < length; ++index) {
             printf("  %lu: %s\n", (index + 1), services[index]);
         }
-        input = readline("Please enter a number: ");
+        printf("Enter a number to select an entry.\n");
+        input = readline("Leave blank to exit: ");
 
-        converted = sscanf(input, "%lu", &service);
+        service = 0;
+        converted = input[0] == 0 ? 1 : sscanf(input, "%lu", &service);
         if (converted && (service > 0) && (service <= length)) {
             printf("Number: %lu\n", service);
             serviceName = services[(service - 1)];
