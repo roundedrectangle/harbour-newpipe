@@ -130,6 +130,18 @@ void create_search_structure(Json* json, char const* const service, char const* 
     }
 }
 
+void create_comments_structure(Json* json, char const* const service, char const* const url, Json* nextPage) {
+    JsonList* list;
+
+    json_clear(json);
+    json_add_string(json, "service", service);
+    json_add_string(json, "url", url);
+
+    if (nextPage) {
+        json_add_dict(json, "page", nextPage);
+    }
+}
+
 void getFilter(graal_isolatethread_t* thread, char const* const service, Buffer *filter) {
     Json* json;
     Buffer* buffer;
@@ -297,6 +309,64 @@ void open_file(char const* const url) {
     printf("\n");
 }
 
+void get_comments(graal_isolatethread_t* thread, Json* json, char const* const service, char const* const url, Json* nextPage) {
+    Buffer* buffer;
+    char* result;
+
+    buffer = buffer_new(1024);
+
+    // Populate the JSON input parameter structure
+    create_comments_structure(json, service, url, nextPage);
+    json_serialize_buffer(json, buffer);
+
+    // Call the Extractor
+    if (!nextPage) {
+        result = invoke(thread, "getCommentsInfo", buffer_get_buffer(buffer));
+    } else {
+        result = invoke(thread, "getMoreCommentItems", buffer_get_buffer(buffer));
+    }
+
+    json_clear(json);
+    json_deserialize_string(json, result, strlen(result));
+
+    buffer_delete(buffer);
+}
+
+void view_comments(graal_isolatethread_t* thread, char const* const service, char const* const url) {
+    Json* json;
+    Json* nextPage;
+    JsonList* items;
+    size_t length;
+    size_t index;
+    Json* item;
+    Json* commentText;
+    char const* name;
+    char const* content;
+
+    json = json_new();
+    nextPage = NULL;
+
+    get_comments(thread, json, service, url, nextPage);
+    nextPage = extract_next_page(json);
+
+    printf("Comments\n");
+    printf("\n");
+    items = json_get_list(json, "relatedItems");
+    length = jsonlist_get_len(items);
+    for (index = 0; index < length; ++index) {
+        item = jsonlist_get_dict(items, index);
+        name = json_get_string(item, "name");
+        commentText = json_get_dict(item, "commentText");
+        content = json_get_string(commentText, "content");
+
+        printf("Comment %ld from %s: %s\n", (index + 1), name, content);
+        printf("\n");
+    }
+
+    json_delete(json);
+    json_delete(nextPage);
+}
+
 void display_metadata(graal_isolatethread_t* thread, Json* json, char const* const service, char const* const key, size_t count, size_t selection) {
     JsonList* list;
     JsonList* metaInfo;
@@ -343,6 +413,7 @@ void display_metadata(graal_isolatethread_t* thread, Json* json, char const* con
             valid = true;
             printf("Enter \"d\" to download the media file.\n");
             printf("Enter \"o\" to open the file.\n");
+            printf("Enter \"c\" to view comments.\n");
             action = readline("Leave blank to return: ");
             switch (action[0]) {
                 case 'd': {
@@ -351,6 +422,10 @@ void display_metadata(graal_isolatethread_t* thread, Json* json, char const* con
                 }
                 case 'o': {
                     open_file(content);
+                    break;
+                }
+                case 'c': {
+                    view_comments(thread, service, url);
                     break;
                 }
                 case 0: {
