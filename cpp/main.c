@@ -97,14 +97,17 @@ Json* extract_next_page(Json * json) {
 
 size_t display_search_results(Json* json, char const* const key, size_t count) {
     JsonList* list;
+    size_t length;
+    size_t index;
+    char const* name;
+    Json* item;
 
     list = json_get_list(json, key);
 
-    size_t length = jsonlist_get_len(list);
-    size_t index;
+    length = jsonlist_get_len(list);
     for (index = 0; index < length; ++index) {
-        Json* item = jsonlist_get_dict(list, index);
-        char const* name = json_get_string(item, "name");
+        item = jsonlist_get_dict(list, index);
+        name = json_get_string(item, "name");
         count++;
         printf("Result %lu: %s\n", count, name);
     }
@@ -309,6 +312,36 @@ void open_file(char const* const url) {
     printf("\n");
 }
 
+size_t display_comments(Json* json, char const* const key, size_t count) {
+    JsonList* list;
+    size_t length;
+    size_t index;
+    char const* name;
+    Json* commentText;
+    char const* content;
+    Json* item;
+
+    list = json_get_list(json, key);
+
+    if (list) {
+        length = jsonlist_get_len(list);
+        for (index = 0; index < length; ++index) {
+            item = jsonlist_get_dict(list, index);
+
+            name = json_get_string(item, "name");
+            commentText = json_get_dict(item, "commentText");
+            content = json_get_string(commentText, "content");
+            count++;
+            printf("Comment %ld from %s: %s\n", count, name, content);
+        }
+    }
+    else {
+        length = 0;
+    }
+
+    return length;
+}
+
 void get_comments(graal_isolatethread_t* thread, Json* json, char const* const service, char const* const url, Json* nextPage) {
     Buffer* buffer;
     char* result;
@@ -333,38 +366,60 @@ void get_comments(graal_isolatethread_t* thread, Json* json, char const* const s
 }
 
 void view_comments(graal_isolatethread_t* thread, char const* const service, char const* const url) {
+    char* input;
     Json* json;
     Json* nextPage;
-    JsonList* items;
-    size_t length;
-    size_t index;
-    Json* item;
-    Json* commentText;
-    char const* name;
-    char const* content;
+    size_t startCount;
+    size_t count;
+    size_t selection;
+    int successCount;
+    char* key;
+    bool repeat;
 
     json = json_new();
     nextPage = NULL;
+    input = "c";
 
-    get_comments(thread, json, service, url, nextPage);
-    nextPage = extract_next_page(json);
+    count = 0;
+    startCount = count;
+    key = "relatedItems";
+    repeat = false;
 
-    printf("Comments\n");
     printf("\n");
-    items = json_get_list(json, "relatedItems");
-    length = jsonlist_get_len(items);
-    for (index = 0; index < length; ++index) {
-        item = jsonlist_get_dict(items, index);
-        name = json_get_string(item, "name");
-        commentText = json_get_dict(item, "commentText");
-        content = json_get_string(commentText, "content");
 
-        printf("Comment %ld from %s: %s\n", (index + 1), name, content);
+    while (input[0] != 0) {
+        if (!repeat) {
+            get_comments(thread, json, service, url, nextPage);
+            nextPage = extract_next_page(json);
+        }
+
+        // Display the results
+        startCount = count;
+        count += display_comments(json, key, count);
+
         printf("\n");
+
+        if (json_get_type(nextPage, "url") == JSONTYPE_STRING) {
+            printf("Enter \"c\" to continue.\n");
+        }
+        else {
+            printf("No more results\n\n");
+        }
+
+        input = readline("Leave blank to return: ");
+
+        if ((strcmp(input, "c") == 0) && (json_get_type(nextPage, "url") == JSONTYPE_STRING)) {
+            key = "itemsList";
+            repeat = false;
+        }
+        else {
+            count = startCount;
+            repeat = true;
+        }
     }
 
-    json_delete(json);
     json_delete(nextPage);
+    json_delete(json);
 }
 
 void display_metadata(graal_isolatethread_t* thread, Json* json, char const* const service, char const* const key, size_t count, size_t selection) {
@@ -471,7 +526,6 @@ void search(graal_isolatethread_t* thread, char const* const service) {
     char* input;
     char* searchString;
     Json* json;
-    Buffer* buffer;
     Buffer* filter;
     char* result;
     Json* nextPage;
@@ -483,7 +537,6 @@ void search(graal_isolatethread_t* thread, char const* const service) {
     bool repeat;
 
     json = json_new();
-    buffer = buffer_new(1024);
     filter = buffer_new(64);
     nextPage = NULL;
     input = "c";
@@ -530,16 +583,16 @@ void search(graal_isolatethread_t* thread, char const* const service) {
         if (successCount == 1) {
             display_metadata(thread, json, service, key, startCount, selection);
             input = "c";
-            repeat = true;
             count = startCount;
+            repeat = true;
         }
         else {
             key = "itemsList";
+            repeat = false;
         }
     }
 
     buffer_delete(filter);
-    buffer_delete(buffer);
     json_delete(nextPage);
     json_delete(json);
 }
