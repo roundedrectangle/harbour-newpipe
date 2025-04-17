@@ -1,3 +1,5 @@
+# Two-stage build
+# First build the artefacts
 FROM ubuntu:noble-20250404
 
 ARG ROOT=/root
@@ -10,13 +12,12 @@ RUN apt update && apt install -y \
     libcurl4-openssl-dev \
     libreadline-dev
 
-ENV GRAALVM_VERSION="23.0.2+7.1"
-ENV GRAALVM_URL=https://download.oracle.com/graalvm/23/latest/graalvm-jdk-23_linux-x64_bin.tar.gz
+ARG GRAALVM_VERSION="23.0.2+7.1"
+ARG GRAALVM_URL=https://download.oracle.com/graalvm/23/latest/graalvm-jdk-23_linux-x64_bin.tar.gz
 
 RUN mkdir ${ROOT}/graalvm
 RUN mkdir ${ROOT}/.ssh
-ENV COMPILEHOST_GRAAL=${ROOT}/graalvm/graalvm-jdk-${GRAALVM_VERSION}
-
+ARG COMPILEHOST_GRAAL=${ROOT}/graalvm/graalvm-jdk-${GRAALVM_VERSION}
 
 RUN ssh-keyscan codeberg.org >> ${ROOT}/.ssh/known_hosts
 RUN ssh-keyscan github.com >> ${ROOT}/.ssh/known_hosts
@@ -41,5 +42,18 @@ RUN cd ${ROOT}/harbour-newpipe/java/NewPipeExtractor/ && \
 RUN cd ${ROOT}/harbour-newpipe/ && \
     make
 
-WORKDIR ${ROOT}
+# Second install the artefacts in a runtime container
+FROM ubuntu:noble-20250404
 
+ARG ROOT=/root
+
+COPY --from=0 ${ROOT}/harbour-newpipe/cpp/main /root/newpipe-console
+COPY --from=0 ${ROOT}/harbour-newpipe/cpp/lib/appwrapper.so /root/appwrapper.so
+
+RUN apt update && apt install -y \
+    zlib1g \
+    libcurl4t64 \
+    libreadline8t64
+
+ENV LD_LIBRARY_PATH=${ROOT}
+CMD ["/root/newpipe-console"]
