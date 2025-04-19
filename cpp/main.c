@@ -13,6 +13,103 @@
 
 #define SERVICE_NUM (5)
 
+typedef struct _Config Config;
+
+struct _Config {
+    bool allowDownloads;
+    bool allowOpening;
+};
+
+Config* config_new() {
+    Config* config;
+
+    config = calloc(sizeof(Config), 1);
+    config->allowDownloads = true;
+    config->allowOpening = true;
+
+    return config;
+}
+
+void config_delete(Config* config) {
+    if (config) {
+        free (config);
+    }
+}
+
+char const* get_next_string(int* argnum, int argc, char** argv) {
+    char const* arg = "";
+
+    if ((*argnum) < argc) {
+        arg = argv[*argnum];
+        ++(*argnum);
+    }
+    return arg;
+}
+
+void print_syntax() {
+    printf("Usage: main [options]\n");
+    printf("Interactive media downloader based on NewPipe Extractor\n");
+    printf("\n");
+    printf("Arguments\n");
+    printf("  --downloads 0|1: block local downloads if 0, allow otherwies.\n");
+    printf("  --opening 0|1:   block opening if 0, allow otherwise.\n");
+}
+
+int get_next_int(int* argnum, int argc, char** argv, bool *success) {
+    char const* arg = "";
+    int result = 0;
+    int read;
+
+    *success = false;
+    if ((*argnum) < argc) {
+        arg = argv[*argnum];
+        ++(*argnum);
+        read = sscanf(arg, "%d", &result);
+        if (read == 1) {
+            *success = true;
+        }
+        else {
+            result = 0;
+        }
+    }
+    return result;
+}
+
+void config_parse(Config* config, int argc, char** argv) {
+    int argnum;
+    char const* arg;
+    int value;
+    bool success;
+
+    success = true;
+    argnum = 1;
+    while (argnum < argc) {
+        arg = get_next_string(&argnum, argc, argv);
+
+        success = false;
+        if ((!success) && (strcmp(arg, "--downloads") == 0)) {
+            value = get_next_int(&argnum, argc, argv, &success);
+            if (success) {
+                config->allowDownloads = value == 1 ? true : false;
+            }
+        }
+
+        if ((!success) && (strcmp(arg, "--opening") == 0)) {
+            value = get_next_int(&argnum, argc, argv, &success);
+            if (success) {
+                config->allowOpening = value == 1 ? true : false;
+            }
+        }
+    }
+
+    if (!success) {
+        print_syntax();
+        exit(1);
+    }
+}
+
+
+
 char const* minetype_to_extension(char const* mimetype) {
     char* mapping[][2]= {
         {"video/mp4", "mp4"},
@@ -226,7 +323,7 @@ size_t download_write(void* ptr, size_t size, size_t nmemb, FILE* userdata) {
     return fwrite(ptr, size, nmemb, userdata);
 }
 
-void download_file(char const* const url, char const* const name) {
+void download_file(Config const* config, char const* const url, char const* const name) {
     CURL* curl;
     FILE* output;
     CURLcode result;
@@ -236,80 +333,98 @@ void download_file(char const* const url, char const* const name) {
     long int responseCode;
     long int redirectCount;
 
-    printf("Downloading: %s\n", url);
-    printf("\n");
-
-    mkdir("./downloads", 0777);
-
-    curl = curl_easy_init();
-    if (curl) {
-        output = fopen("./downloads/download.dat", "wb");
-        curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, output);
-        result = curl_easy_perform(curl);
-
-        result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
-        if (result == CURLE_OK) {
-            printf("Response code: %ld\n", responseCode);
-        }
-
-        result = curl_easy_getinfo(curl, CURLINFO_REDIRECT_COUNT , &redirectCount);
-        if (result == CURLE_OK) {
-            printf("Redirect count: %ld\n", redirectCount);
-        }
-
-        extension = "dat";
-        if (result == CURLE_OK) {
-            result = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &contentType);
-        }
-        if (result == CURLE_OK) {
-            printf("Content type: %s\n", contentType);
-            extension = minetype_to_extension(contentType);
-            printf("Extension: %s\n", extension);
-        }
-
-        filename = buffer_new(1024);
-        buffer_append_string(filename, name);
-        sanitise_name(filename, extension);
-        rename("./downloads/download.dat", buffer_get_buffer(filename));
-        printf("File saved to: %s\n", buffer_get_buffer(filename));
+    if (config->allowDownloads) {
+        printf("Downloading: %s\n", url);
         printf("\n");
-        buffer_delete(filename);
 
-        curl_easy_cleanup(curl);
-        fclose(output);
+        mkdir("./downloads", 0777);
+
+        curl = curl_easy_init();
+        if (curl) {
+            output = fopen("./downloads/download.dat", "wb");
+            curl_easy_setopt(curl, CURLOPT_URL, url);
+            curl_easy_setopt(curl, CURLOPT_URL, url);
+            curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, output);
+            result = curl_easy_perform(curl);
+
+            result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+            if (result == CURLE_OK) {
+                printf("Response code: %ld\n", responseCode);
+            }
+
+            result = curl_easy_getinfo(curl, CURLINFO_REDIRECT_COUNT , &redirectCount);
+            if (result == CURLE_OK) {
+                printf("Redirect count: %ld\n", redirectCount);
+            }
+
+            extension = "dat";
+            if (result == CURLE_OK) {
+                result = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &contentType);
+            }
+            if (result == CURLE_OK) {
+                printf("Content type: %s\n", contentType);
+                extension = minetype_to_extension(contentType);
+                printf("Extension: %s\n", extension);
+            }
+
+            filename = buffer_new(1024);
+            buffer_append_string(filename, name);
+            sanitise_name(filename, extension);
+            rename("./downloads/download.dat", buffer_get_buffer(filename));
+            printf("File saved to: %s\n", buffer_get_buffer(filename));
+            printf("\n");
+            buffer_delete(filename);
+
+            curl_easy_cleanup(curl);
+            fclose(output);
+        }
+    }
+    else {
+        printf("Downloading is disabled in this version of the application.\n");
+        printf("Use the following URL to access the media:.\n");
+        printf("\n");
+        printf("%s\n", url);
+        printf("\n");
     }
 }
 
-void open_file(char const* const url) {
+void open_file(Config const* config, char const* const url) {
     char* argv[3];
     int status;
     extern char **environ;
 
-    printf("Opening: %s\n", url);
-    printf("\n");
+    if (config->allowOpening) {
+        printf("Opening: %s\n", url);
+        printf("\n");
 
-    posix_spawn_file_actions_t action;
-    posix_spawn_file_actions_init(&action);
-    posix_spawn_file_actions_addopen(&action, STDERR_FILENO, "/dev/null", O_WRONLY | O_APPEND, 0);
+        posix_spawn_file_actions_t action;
+        posix_spawn_file_actions_init(&action);
+        posix_spawn_file_actions_addopen(&action, STDERR_FILENO, "/dev/null", O_WRONLY | O_APPEND, 0);
 
-    argv[0] = "xdg-open";
-    argv[1] = strdup(url);
-    argv[2] = 0;
-    status = posix_spawnp(NULL, "xdg-open", &action, NULL, argv, environ);
+        argv[0] = "xdg-open";
+        argv[1] = strdup(url);
+        argv[2] = 0;
+        status = posix_spawnp(NULL, "xdg-open", &action, NULL, argv, environ);
 
-    posix_spawn_file_actions_destroy(&action);
-    free(argv[1]);
+        posix_spawn_file_actions_destroy(&action);
+        free(argv[1]);
 
-    if (status == 0) {
-        printf("Opened\n");
+        if (status == 0) {
+            printf("Opened\n");
+        }
+        else {
+            printf("Open failed\n");
+        }
+        printf("\n");
     }
     else {
-        printf("Open failed\n");
+        printf("Opening is disabled in this version of the application.\n");
+        printf("Use the following URL to access the media:.\n");
+        printf("\n");
+        printf("%s\n", url);
+        printf("\n");
     }
-    printf("\n");
 }
 
 size_t display_comments(Json* json, char const* const key, size_t count) {
@@ -422,7 +537,7 @@ void view_comments(graal_isolatethread_t* thread, char const* const service, cha
     json_delete(json);
 }
 
-void display_metadata(graal_isolatethread_t* thread, Json* json, char const* const service, char const* const key, size_t count, size_t selection) {
+void display_metadata(graal_isolatethread_t* thread, Config const* config, Json* json, char const* const service, char const* const key, size_t count, size_t selection) {
     JsonList* list;
     JsonList* metaInfo;
     size_t metaInfoLength;
@@ -472,11 +587,11 @@ void display_metadata(graal_isolatethread_t* thread, Json* json, char const* con
             action = readline("Leave blank to return: ");
             switch (action[0]) {
                 case 'd': {
-                    download_file(content, name);
+                    download_file(config, content, name);
                     break;
                 }
                 case 'o': {
-                    open_file(content);
+                    open_file(config, content);
                     break;
                 }
                 case 'c': {
@@ -522,7 +637,7 @@ void get_search_results(graal_isolatethread_t* thread, Json* json, char const* c
     buffer_delete(buffer);
 }
 
-void search(graal_isolatethread_t* thread, char const* const service) {
+void search(graal_isolatethread_t* thread, Config const* config, char const* const service) {
     char* input;
     char* searchString;
     Json* json;
@@ -581,7 +696,7 @@ void search(graal_isolatethread_t* thread, char const* const service) {
 
         successCount = sscanf(input, "%lu", &selection);
         if (successCount == 1) {
-            display_metadata(thread, json, service, key, startCount, selection);
+            display_metadata(thread, config, json, service, key, startCount, selection);
             input = "c";
             count = startCount;
             repeat = true;
@@ -670,6 +785,11 @@ void printExtracted(char* response) {
 int main(int argc, char** argv) {
     char* result;
     char const* service = "";
+    Config* config;
+
+    config = config_new();
+
+    config_parse(config, argc, argv);
 
     graal_isolate_t* isolate = NULL;
     graal_isolatethread_t* thread = NULL;
@@ -685,13 +805,15 @@ int main(int argc, char** argv) {
         service = select_service();
 
         if (service) {
-            search(thread, service);
+            search(thread, config, service);
         }
     }
 
     result = invoke(thread, "tearDown", "{}");
 
     graal_tear_down_isolate(thread);
+
+    config_delete(config);
 
     return 0;
 }
