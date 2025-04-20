@@ -382,7 +382,7 @@ void download_file(Config const* config, char const* const url, char const* cons
     }
     else {
         printf("Downloading is disabled in this version of the application.\n");
-        printf("Use the following URL to access the media:.\n");
+        printf("Use the following URL to access the media:\n");
         printf("\n");
         printf("%s\n", url);
         printf("\n");
@@ -420,7 +420,7 @@ void open_file(Config const* config, char const* const url) {
     }
     else {
         printf("Opening is disabled in this version of the application.\n");
-        printf("Use the following URL to access the media:.\n");
+        printf("Use the following URL to access the media:\n");
         printf("\n");
         printf("%s\n", url);
         printf("\n");
