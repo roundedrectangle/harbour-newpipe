@@ -811,7 +811,7 @@ int main(int argc, char** argv) {
 
     result = invoke(thread, "tearDown", "{}");
 
-    graal_tear_down_isolate(thread);
+    graal_detach_thread(thread);
 
     config_delete(config);
 
