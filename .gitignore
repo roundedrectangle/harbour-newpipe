@@ -32,3 +32,15 @@
 *.out
 *.app
 
+# Built files for the cpp demo
+cpp/include
+cpp/lib
+cpp/main
+
+# Built files for the Sailfish OS app
+sfos/build-harbour-newpipe-*
+sfos/harbour-newpipe/include
+sfos/harbour-newpipe/lib
+sfos/harbour-newpipe/harbour-newpipe.pro.user
+
+
