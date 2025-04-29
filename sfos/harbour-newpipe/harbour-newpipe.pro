@@ -16,6 +16,10 @@ CONFIG += sailfishapp
 
 SOURCES += src/harbour-newpipe.cpp
 
+INCLUDEPATH += include
+
+LIBS += -L $${_PRO_FILE_PWD_}/lib -l:appwrapper.so
+
 DISTFILES += qml/harbour-newpipe.qml \
     qml/cover/CoverPage.qml \
     qml/pages/FirstPage.qml \
@@ -25,6 +29,9 @@ DISTFILES += qml/harbour-newpipe.qml \
     rpm/harbour-newpipe.spec \
     translations/*.ts \
     harbour-newpipe.desktop
+
+OTHER_FILES += include/* \
+    lib/*
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
 

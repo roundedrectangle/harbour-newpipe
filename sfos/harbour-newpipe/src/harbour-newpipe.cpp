@@ -4,6 +4,8 @@
 
 #include <sailfishapp.h>
 
+#include "appwrapper.h"
+
 int main(int argc, char *argv[])
 {
     // SailfishApp::main() will display "qml/harbour-newpipe.qml", if you need more
@@ -15,6 +17,15 @@ int main(int argc, char *argv[])
     //   - SailfishApp::pathToMainQml() to get a QUrl to the main QML file
     //
     // To display the view, call "show()" (will show fullscreen on device).
+
+
+    graal_isolate_t* isolate = NULL;
+    graal_isolatethread_t* thread = NULL;
+
+    if (graal_create_isolate(NULL, &isolate, &thread) != 0) {
+        fprintf(stderr, "initialization error\n");
+        return 1;
+    }
 
     return SailfishApp::main(argc, argv);
 }
