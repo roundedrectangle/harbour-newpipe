@@ -4,39 +4,95 @@ import Sailfish.Silica 1.0
 Page {
     id: page
 
-    // The effective value will be restricted by ApplicationWindow.allowedOrientations
-    allowedOrientations: Orientation.All
+    property string searchString
+    property bool tv
+    property string screenName
+    property int totalitems: 0
+    property bool busy: false
+    property int displayCount: 0
 
-    // To enable PullDownMenu, place our content in a SilicaFlickable
-    SilicaFlickable {
+    onSearchStringChanged: {
+        (tv ? programmestv : programmesradio).setFilterFixedString(searchString)
+        totalitems = (tv ? programmestv : programmesradio).sourceModel.rowCount()
+    }
+
+    SilicaListView {
+        id: listView
+        model: null
         anchors.fill: parent
 
-        // PullDownMenu and PushUpMenu must be declared in SilicaFlickable, SilicaListView or SilicaGridView
-        PullDownMenu {
-            MenuItem {
-                text: qsTr("Show Page 2")
-                onClicked: pageStack.animatorPush(Qt.resolvedUrl("SecondPage.qml"))
+        onCurrentIndexChanged: {
+            // This nasty hack prevents the currentIndex being set
+            // away from -1
+            // This avoids the virtual keyboard disappearing when the
+            // search filter is changed
+            listView.currentIndex = -1
+            //console.log("CurrentIndex: " + currentIndex)
+        }
+
+        VerticalScrollDecorator {}
+
+        header: Column {
+            id: headerColumn
+            width: page.width
+            height: header.height + searchField.height
+
+            PageHeader {
+                id: header
+                title: screenName
+            }
+
+            SearchField {
+                id: searchField
+                width: parent.width
+                //% "Search"
+                placeholderText: qsTrId("newpipe-proglist_search_placeholder")
+                // Predictive text actually messes up the clear button so it only
+                // works if there's more than one word (weird!), but predictive
+                // is likely to be the more useful of the two, so I've left it on
+                //inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
+                inputMethodHints: Qt.ImhNoAutoUppercase
+
+                Binding {
+                    target: page
+                    property: "searchString"
+                    value: searchField.text.toLowerCase().trim()
+                }
             }
         }
 
-        // Tell SilicaFlickable the height of its content.
-        contentHeight: column.height
+        ViewPlaceholder {
+            enabled: listView.count === 0
+            textFormat: Text.RichText
+            text: "Placeholder"
+            hintText: "Placeholder hint"
+        }
 
-        // Place our content in a Column.  The PageHeader is always placed at the top
-        // of the page, followed by our content.
-        Column {
-            id: column
+        delegate: BackgroundItem {
+            id: delegate
+            focus: false
 
-            width: page.width
-            spacing: Theme.paddingLarge
-            PageHeader {
-                title: qsTr("UI Template")
+            ListView.onAdd: AddAnimation {
+                id: animadd
+                target: delegate
             }
+            ListView.onRemove: RemoveAnimation {
+                id: animremove
+                target: delegate
+            }
+
             Label {
-                x: Theme.horizontalPageMargin
-                text: qsTr("Hello Sailors")
-                color: Theme.secondaryHighlightColor
-                font.pixelSize: Theme.fontSizeExtraLarge
+                x: Theme.paddingLarge
+                anchors.verticalCenter: parent.verticalCenter
+                color: Theme.primaryColor
+                textFormat: Text.StyledText
+                text: "Title"
+                width: parent.width - (2 * Theme.paddingLarge)
+                elide: Text.ElideRight
+                focus: false
+            }
+            onClicked: {
+                console.log("Clicked " + name)
             }
         }
     }
