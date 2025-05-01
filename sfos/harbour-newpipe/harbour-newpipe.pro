@@ -28,10 +28,15 @@ DISTFILES += qml/harbour-newpipe.qml \
     rpm/harbour-newpipe.changes.run.in \
     rpm/harbour-newpipe.spec \
     translations/*.ts \
-    harbour-newpipe.desktop
+    harbour-newpipe.desktop \
+    lib/appwrapper.so
 
-OTHER_FILES += include/* \
-    lib/*
+library.path = /usr/share/harbour-newpipe/lib/
+library.files = lib/appwrapper.so
+
+INSTALLS += library
+
+OTHER_FILES += include/*
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
 

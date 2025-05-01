@@ -16,6 +16,7 @@ BuildRequires:  desktop-file-utils
 %description
 Short description of harbour-newpipe Application
 
+%global _missing_build_ids_terminate_build 0
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -39,5 +40,6 @@ desktop-file-install --delete-original       \
 %defattr(-,root,root,-)
 %{_bindir}/%{name}
 %{_datadir}/%{name}
+%{_datadir}/%{name}/lib/appwrapper.so
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
