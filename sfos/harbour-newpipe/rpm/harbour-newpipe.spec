@@ -12,24 +12,26 @@ BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Quick)
 BuildRequires:  desktop-file-utils
+BuildRequires:  cmake
 
 %description
 Short description of harbour-newpipe Application
 
 %global _missing_build_ids_terminate_build 0
+%define __requires_exclude ^lib/appwrapper.*$
 
 %prep
 %setup -q -n %{name}-%{version}
 
 %build
 
-%qmake5 
+%cmake
 
 %make_build
 
 
 %install
-%qmake5_install
+%make_install
 
 
 desktop-file-install --delete-original       \
