@@ -26,7 +26,9 @@ target_link_libraries(harbour-newpipe
     ${SAILFISH_LDFLAGS}
     -l:appwrapper.so
 )
-
+target_sources(harbour-newpipe PRIVATE
+    "src/extractor.cpp"
+)
 install(TARGETS harbour-newpipe
     RUNTIME DESTINATION bin
 )

@@ -5,15 +5,13 @@ Page {
     id: page
 
     property string searchString
-    property bool tv
     property string screenName
     property int totalitems: 0
     property bool busy: false
     property int displayCount: 0
 
     onSearchStringChanged: {
-        (tv ? programmestv : programmesradio).setFilterFixedString(searchString)
-        totalitems = (tv ? programmestv : programmesradio).sourceModel.rowCount()
+        extractor.search();
     }
 
     SilicaListView {
