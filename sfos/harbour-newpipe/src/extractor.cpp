@@ -1,45 +1,17 @@
-#include "extractor.h"
-
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDebug>
 #include <QtConcurrent/QtConcurrent>
 
-class Invoke : public QObject {
-public:
-  Invoke(Extractor* extractor, QString const methodName, QJsonDocument const* in)
-    : QObject(dynamic_cast<QObject*>(extractor))
-    , extractor(extractor)
-    , methodName(methodName)
-    , in(*in)
-  {
-  }
+#include "invoke.h"
+#include "searchmodel.h"
 
-  QJsonDocument run()
-  {
-    char const* result;
-    QJsonDocument document;
+#include "extractor.h"
 
-    qDebug() << "JSON input: " << in.toJson().data();
-    result = invoke(extractor->thread, methodName.toLatin1().data(), in.toJson().data());
-    QJsonParseError error;
-    document = QJsonDocument::fromJson(QByteArray(result), &error);
-    if (document.isNull()) {
-      qDebug() << "JSON Parsing error: " << error.errorString();
-    }
-    qDebug() << "JSON output: " << document.toJson().data();
-
-    this->deleteLater();
-    return document;
-  }
-private:
-  Extractor const* extractor;
-  QString methodName;
-  QJsonDocument in;
-};
-
-Extractor::Extractor(QObject *parent) : QObject(parent)
+Extractor::Extractor(SearchModel* searchModel, QObject *parent)
+  : QObject(parent)
+  , searchModel(searchModel)
 {
   QFuture<QString> initialise;
   threadPool.setMaxThreadCount(1);
@@ -84,24 +56,32 @@ QFuture<QJsonDocument> Extractor::invokeAsync(QString const methodName, QJsonDoc
   return QtConcurrent::run(&threadPool, invoke, &Invoke::run);
 }
 
-void Extractor::search()
+void Extractor::search(QString const& searchTerm)
 {
   QJsonObject json;
   QJsonArray contentFilter;
   QJsonDocument document;
 
   json["service"] = QStringLiteral("YouTube");
-  json["searchString"] = QStringLiteral("testing");
+  json["searchString"] = searchTerm;
   contentFilter.push_back(QStringLiteral("all"));
   json["contentFilter"] = contentFilter;
   json["sortFilter"] = QStringLiteral("");
   document = QJsonDocument(json);
 
-  qDebug() << "Search input: " << json;
-
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
-  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [watcher]() {
-    qDebug() << "Search result: " << watcher->result();
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher]() {
+    QJsonDocument result = watcher->result();
+
+    QJsonArray items = result.object()["relatedItems"].toArray();
+    QStringList searchResults;
+    for (QJsonValue const& item : items) {
+      QJsonObject entry = item.toObject();
+      qDebug() << "Entry: " << entry["name"].toString();
+      searchResults.append(entry["name"].toString());
+    }
+    this->searchModel->replaceAll(searchResults);
+
     delete watcher;
   });
   watcher->setFuture(invokeAsync("searchFor", &document));

@@ -9,14 +9,24 @@ Page {
     property int totalitems: 0
     property bool busy: false
     property int displayCount: 0
+    readonly property alias pendingSearch: searchTimer.running
 
     onSearchStringChanged: {
-        extractor.search();
+        searchTimer.restart()
+    }
+
+    Timer {
+        id: searchTimer
+        interval: 500
+        repeat: false
+        onTriggered: {
+            extractor.search(searchString);
+        }
     }
 
     SilicaListView {
         id: listView
-        model: null
+        model: searchModel
         anchors.fill: parent
 
         onCurrentIndexChanged: {
@@ -84,7 +94,7 @@ Page {
                 anchors.verticalCenter: parent.verticalCenter
                 color: Theme.primaryColor
                 textFormat: Text.StyledText
-                text: "Title"
+                text: model.name
                 width: parent.width - (2 * Theme.paddingLarge)
                 elide: Text.ElideRight
                 focus: false

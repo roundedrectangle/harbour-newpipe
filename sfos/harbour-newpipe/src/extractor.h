@@ -7,15 +7,17 @@
 
 #include "appwrapper.h"
 
+class SearchModel;
+
 class Extractor : public QObject
 {
   Q_OBJECT
 public:
-  explicit Extractor(QObject *parent = nullptr);
+  explicit Extractor(SearchModel* searchModel, QObject *parent = nullptr);
   ~Extractor();
 
 public slots:
-  void search();
+  void search(QString const& searchTerm);
 
 private:
   QJsonDocument invokeSync(QString const methodName, QJsonDocument const* in);
@@ -26,6 +28,7 @@ public:
   graal_isolate_t* isolate;
   graal_isolatethread_t* thread;
   QThreadPool threadPool;
+  SearchModel* searchModel;
 
 signals:
 

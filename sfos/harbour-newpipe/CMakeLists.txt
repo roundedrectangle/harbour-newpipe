@@ -28,6 +28,8 @@ target_link_libraries(harbour-newpipe
 )
 target_sources(harbour-newpipe PRIVATE
     "src/extractor.cpp"
+    "src/invoke.cpp"
+    "src/searchmodel.cpp"
 )
 install(TARGETS harbour-newpipe
     RUNTIME DESTINATION bin
