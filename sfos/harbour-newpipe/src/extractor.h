@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QFuture>
+#include <QThreadPool>
 
 #include "appwrapper.h"
 
@@ -21,9 +22,10 @@ private:
 
   QFuture<QJsonDocument> invokeAsync(QString const methodName, QJsonDocument const* in);
 
-private:
+public:
   graal_isolate_t* isolate;
   graal_isolatethread_t* thread;
+  QThreadPool threadPool;
 
 signals:
 
