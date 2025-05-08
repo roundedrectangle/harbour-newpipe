@@ -3,12 +3,15 @@
 
 #include <QAbstractListModel>
 
+#include "searchitem.h"
+
 class SearchModel : public QAbstractListModel
 {
   Q_OBJECT
 public:
   enum SearchRoles {
-      NameRole = Qt::UserRole + 1,
+    NameRole = Qt::UserRole + 1,
+    ThumbnailRole,
   };
 
   explicit SearchModel(QObject *parent = nullptr);
@@ -19,11 +22,11 @@ public:
 
   QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
 
-  void replaceAll(QStringList searchResults);
+  void replaceAll(QList<SearchItem> const& searchResults);
 
 private:
   QHash<int, QByteArray> roles;
-  QStringList searchResults;
+  QList<SearchItem> searchResults;
 };
 
 #endif // SEARCHMODEL_H

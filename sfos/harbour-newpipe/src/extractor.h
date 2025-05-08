@@ -24,6 +24,8 @@ private:
 
   QFuture<QJsonDocument> invokeAsync(QString const methodName, QJsonDocument const* in);
 
+  static int compareResolutions(QString const& first, QString const& second);
+
 public:
   graal_isolate_t* isolate;
   graal_isolatethread_t* thread;

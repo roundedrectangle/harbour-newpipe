@@ -3,6 +3,7 @@
 #include <QJsonArray>
 #include <QDebug>
 #include <QtConcurrent/QtConcurrent>
+#include <QtGlobal>
 
 #include "invoke.h"
 #include "searchmodel.h"
@@ -72,17 +73,46 @@ void Extractor::search(QString const& searchTerm)
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
   QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher]() {
     QJsonDocument result = watcher->result();
+    //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
     QJsonArray items = result.object()["relatedItems"].toArray();
-    QStringList searchResults;
+    QList<SearchItem> searchResults;
     for (QJsonValue const& item : items) {
       QJsonObject entry = item.toObject();
-      qDebug() << "Entry: " << entry["name"].toString();
-      searchResults.append(entry["name"].toString());
+      //qDebug() << "Entry: " << entry["name"].toString();
+
+      QString url;
+      QJsonArray thumbnails = entry["thumbnails"].toArray();
+      QString resolutionLevel;
+      for (QJsonValue const& thumbnail : thumbnails) {
+        QJsonObject details = thumbnail.toObject();
+        QString estimatedResolutionLevel = details["estimatedResolutionLevel"].toString();
+        if (resolutionLevel.isEmpty() || compareResolutions(resolutionLevel, estimatedResolutionLevel) < 0) {
+          url = details["url"].toString();
+          resolutionLevel = estimatedResolutionLevel;
+        }
+      }
+      QString name = entry["name"].toString();
+      SearchItem result(name, url);
+      searchResults.append(result);
     }
     this->searchModel->replaceAll(searchResults);
 
     delete watcher;
   });
   watcher->setFuture(invokeAsync("searchFor", &document));
+}
+
+int Extractor::compareResolutions(QString const& first, QString const& second)
+{
+  static QStringList const ordering = {"", "HIGH", "MEDIUM", "LOW"};
+  int result = 0;
+  int firstIndex;
+  int secondIndex;
+
+  firstIndex = ordering.indexOf(first);
+  secondIndex = ordering.indexOf(second);
+  result = qBound(-1, firstIndex - secondIndex, 1);
+
+  return result;
 }

@@ -3,6 +3,7 @@
 SearchModel::SearchModel(QObject *parent) : QAbstractListModel(parent)
 {
   roles[NameRole] = "name";
+  roles[ThumbnailRole] = "thumbnail";
 }
 
 QHash<int, QByteArray> SearchModel::roleNames() const
@@ -21,15 +22,17 @@ QVariant SearchModel::data(const QModelIndex & index, int role) const
   QVariant result = QVariant();
 
   if ((index.row() >= 0) && (index.row() < searchResults.count())) {
-    QString const& searchResult = searchResults[index.row()];
+    SearchItem const& searchResult = searchResults[index.row()];
     if (role == NameRole)
-        result = searchResult;
+      result = searchResult.getName();
+    else if (role == ThumbnailRole)
+      result = searchResult.getThumbnail();
   }
 
   return result;
 }
 
-void SearchModel::replaceAll(QStringList searchResults)
+void SearchModel::replaceAll(QList<SearchItem> const& searchResults)
 {
   beginResetModel();
   this->searchResults.clear();

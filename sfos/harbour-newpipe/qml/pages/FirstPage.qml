@@ -79,6 +79,8 @@ Page {
         delegate: BackgroundItem {
             id: delegate
             focus: false
+            height: thumbnail.height + (2 * Theme.paddingMedium)
+            readonly property real iconScale: 1.5
 
             ListView.onAdd: AddAnimation {
                 id: animadd
@@ -89,16 +91,33 @@ Page {
                 target: delegate
             }
 
-            Label {
+            Row {
                 x: Theme.paddingLarge
-                anchors.verticalCenter: parent.verticalCenter
-                color: Theme.primaryColor
-                textFormat: Text.StyledText
-                text: model.name
+                y: Theme.paddingMedium
                 width: parent.width - (2 * Theme.paddingLarge)
-                elide: Text.ElideRight
-                focus: false
+                height: thumbnail.height
+                spacing: Theme.paddingLarge
+
+                Image {
+                    id: thumbnail
+                    width: Theme.iconSizeLarge * iconScale
+                    height: Theme.iconSizeMedium * iconScale
+                    fillMode: Image.PreserveAspectCrop
+                    verticalAlignment: Image.AlignVCenter
+                    source: model.thumbnail
+                }
+
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: Theme.primaryColor
+                    textFormat: Text.StyledText
+                    text: model.name
+                    width: parent.width - thumbnail.width - Theme.paddingLarge
+                    elide: Text.ElideRight
+                    focus: false
+                }
             }
+
             onClicked: {
                 console.log("Clicked " + name)
             }
