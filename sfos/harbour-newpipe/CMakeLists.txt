@@ -68,8 +68,8 @@ add_custom_target(distfiles
         harbour-newpipe.desktop
         qml/harbour-newpipe.qml
         qml/cover/CoverPage.qml
-        qml/pages/FirstPage.qml
-        qml/pages/SecondPage.qml
+        qml/pages/SearchPage.qml
+        qml/pages/VideoPage.qml
         rpm/harbour-newpipe.changes.in
         rpm/harbour-newpipe.changes.run.in
         rpm/harbour-newpipe.spec
