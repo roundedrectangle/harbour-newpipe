@@ -123,7 +123,8 @@ Page {
             onClicked: {
                 pageStack.push(Qt.resolvedUrl("VideoPage.qml"), {
                     name: model.name,
-                    thumbnail: model.thumbnail
+                    thumbnail: model.thumbnail,
+                    url: model.url
                 })
             }
         }

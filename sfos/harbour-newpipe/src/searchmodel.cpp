@@ -28,7 +28,7 @@ QVariant SearchModel::data(const QModelIndex & index, int role) const
       result = searchResult.getName();
     else if (role == ThumbnailRole)
       result = searchResult.getThumbnail();
-    else if (role == ThumbnailRole)
+    else if (role == UrlRole)
       result = searchResult.getUrl();
   }
 

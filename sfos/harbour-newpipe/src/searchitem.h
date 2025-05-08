@@ -14,7 +14,7 @@ public:
 
   void setName(QString const& name);
   void setThumbnail(QString const& thumbnail);
-  void setUrl(QString const& thumbnail);
+  void setUrl(QString const& url);
 
 private:
   QString name;
