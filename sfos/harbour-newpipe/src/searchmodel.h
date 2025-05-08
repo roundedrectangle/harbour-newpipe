@@ -12,6 +12,7 @@ public:
   enum SearchRoles {
     NameRole = Qt::UserRole + 1,
     ThumbnailRole,
+    UrlRole,
   };
 
   explicit SearchModel(QObject *parent = nullptr);

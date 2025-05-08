@@ -54,7 +54,7 @@ Page {
                 id: searchField
                 width: parent.width
                 //% "Search"
-                placeholderText: qsTrId("newpipe-proglist_search_placeholder")
+                placeholderText: qsTrId("newpipe-proglist_search-placeholder")
                 // Predictive text actually messes up the clear button so it only
                 // works if there's more than one word (weird!), but predictive
                 // is likely to be the more useful of the two, so I've left it on
@@ -72,8 +72,10 @@ Page {
         ViewPlaceholder {
             enabled: listView.count === 0
             textFormat: Text.RichText
-            text: "Placeholder"
-            hintText: "Placeholder hint"
+            //% "No entries"
+            text: qsTrId("newpipe-proglist_search-no-entries")
+            //% "Enter some text to search"
+            hintText: qsTrId("newpipe-proglist_search-enter-some-text")
         }
 
         delegate: BackgroundItem {
@@ -119,7 +121,10 @@ Page {
             }
 
             onClicked: {
-                console.log("Clicked " + name)
+                pageStack.push(Qt.resolvedUrl("VideoPage.qml"), {
+                    name: model.name,
+                    thumbnail: model.thumbnail
+                })
             }
         }
     }

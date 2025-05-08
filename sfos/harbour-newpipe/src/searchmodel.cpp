@@ -4,6 +4,7 @@ SearchModel::SearchModel(QObject *parent) : QAbstractListModel(parent)
 {
   roles[NameRole] = "name";
   roles[ThumbnailRole] = "thumbnail";
+  roles[UrlRole] = "url";
 }
 
 QHash<int, QByteArray> SearchModel::roleNames() const
@@ -27,6 +28,8 @@ QVariant SearchModel::data(const QModelIndex & index, int role) const
       result = searchResult.getName();
     else if (role == ThumbnailRole)
       result = searchResult.getThumbnail();
+    else if (role == ThumbnailRole)
+      result = searchResult.getUrl();
   }
 
   return result;

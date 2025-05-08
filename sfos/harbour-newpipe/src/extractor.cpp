@@ -81,19 +81,20 @@ void Extractor::search(QString const& searchTerm)
       QJsonObject entry = item.toObject();
       //qDebug() << "Entry: " << entry["name"].toString();
 
-      QString url;
+      QString thumbnailUrl;
       QJsonArray thumbnails = entry["thumbnails"].toArray();
       QString resolutionLevel;
       for (QJsonValue const& thumbnail : thumbnails) {
         QJsonObject details = thumbnail.toObject();
         QString estimatedResolutionLevel = details["estimatedResolutionLevel"].toString();
         if (resolutionLevel.isEmpty() || compareResolutions(resolutionLevel, estimatedResolutionLevel) < 0) {
-          url = details["url"].toString();
+          thumbnailUrl = details["url"].toString();
           resolutionLevel = estimatedResolutionLevel;
         }
       }
       QString name = entry["name"].toString();
-      SearchItem result(name, url);
+      QString url = entry["url"].toString();
+      SearchItem result(name, thumbnailUrl, url);
       searchResults.append(result);
     }
     this->searchModel->replaceAll(searchResults);
