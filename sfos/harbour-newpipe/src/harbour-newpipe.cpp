@@ -4,6 +4,7 @@
 
 #include "searchmodel.h"
 #include "extractor.h"
+#include "mediainfo.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,6 +17,9 @@ int main(int argc, char *argv[])
   QScopedPointer<Extractor> extractor(new Extractor(searchModel.data(), app.data()));
   QScopedPointer<QQuickView> view(SailfishApp::createView());
   QQmlContext *ctxt = view->rootContext();
+
+  qmlRegisterType<Extractor>("harbour.newpipe.extractor", 1, 0, "Extractor");
+  qmlRegisterType<MediaInfo>("harbour.newpipe.extractor", 1, 0, "MediaInfo");
 
   ctxt->setContextProperty("extractor", extractor.data());
   ctxt->setContextProperty("searchModel", searchModel.data());

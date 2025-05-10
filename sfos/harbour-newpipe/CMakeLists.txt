@@ -31,6 +31,7 @@ target_sources(harbour-newpipe PRIVATE
     "src/invoke.cpp"
     "src/searchmodel.cpp"
     "src/searchitem.cpp"
+    "src/mediainfo.cpp"
 )
 install(TARGETS harbour-newpipe
     RUNTIME DESTINATION bin

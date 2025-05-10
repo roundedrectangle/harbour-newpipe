@@ -7,8 +7,15 @@
 
 #include "invoke.h"
 #include "searchmodel.h"
+#include "mediainfo.h"
 
 #include "extractor.h"
+
+Extractor::Extractor(QObject *parent)
+  : QObject(parent)
+  , searchModel()
+{
+}
 
 Extractor::Extractor(SearchModel* searchModel, QObject *parent)
   : QObject(parent)
@@ -116,4 +123,48 @@ int Extractor::compareResolutions(QString const& first, QString const& second)
   result = qBound(-1, firstIndex - secondIndex, 1);
 
   return result;
+}
+
+void Extractor::downloadExtract(QString const& url)
+{
+  QJsonObject json;
+  QJsonDocument document;
+
+  json["service"] = QStringLiteral("YouTube");
+  json["url"] = url;
+  document = QJsonDocument(json);
+
+  QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, url]() {
+    QJsonDocument result = watcher->result();
+    //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+    QJsonObject root = result.object();
+    QString name = root["name"].toString();
+    QString uploaderName = root["uploaderName"].toString();
+    QString category = root["category"].toString();
+    int viewCount = root["likeCount"].toInt();
+    int likeCount = root["viewCount"].toInt();
+    QString content = root["content"].toString();
+
+    qDebug() << "Name: " << name;
+    qDebug() << "Uploader name: " << uploaderName;
+    qDebug() << "Category: " << category;
+    qDebug() << "View Count: " << viewCount;
+    qDebug() << "Like Count: " << likeCount;
+    qDebug() << "Content: " << content;
+
+    MediaInfo* info = new MediaInfo(url, name, uploaderName, category, viewCount, likeCount, content, this);
+    mediaInfo.insert(url, info);
+
+    emit extracted(url);
+
+    delete watcher;
+  });
+  watcher->setFuture(invokeAsync("downloadExtract", &document));
+}
+
+MediaInfo* Extractor::getMediaInfo(QString const& url) const
+{
+  static MediaInfo nomedia;
+  return mediaInfo.value(url, &nomedia);
 }

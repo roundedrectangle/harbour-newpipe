@@ -1,15 +1,30 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import QtMultimedia 5.0
+import harbour.newpipe.extractor 1.0
 
 Page {
+    id: page
     property alias name: videoTitle.text
     property alias thumbnail: image.source
-    property alias url: media.source
+    property string url
+    property MediaInfo mediaInfo
 
     MediaPlayer {
         id: media
         autoPlay: true
+    }
+
+    Connections {
+        target: extractor
+        onExtracted: {
+            if (url === page.url) {
+                mediaInfo = extractor.getMediaInfo(url);
+                if (mediaInfo) {
+                    media.source = mediaInfo.getContent();
+                }
+            }
+        }
     }
 
     SilicaFlickable {
@@ -37,13 +52,13 @@ Page {
                 height: width * (9 / 16)
                 fillMode: Image.PreserveAspectFit
                 source: media
-            }
 
-            Image {
-                id: image
-                width: parent.width
-                height: width * (9 / 16)
-                fillMode: Image.PreserveAspectFit
+                Image {
+                    id: image
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectFit
+                    visible: media.source == ""
+                }
             }
 
             Label {

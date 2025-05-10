@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import harbour.newpipe.extractor 1.0
 
 Page {
     id: page
@@ -121,11 +122,12 @@ Page {
             }
 
             onClicked: {
+                extractor.downloadExtract(model.url);
                 pageStack.push(Qt.resolvedUrl("VideoPage.qml"), {
                     name: model.name,
                     thumbnail: model.thumbnail,
                     url: model.url
-                })
+                });
             }
         }
     }
