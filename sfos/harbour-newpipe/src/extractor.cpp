@@ -22,7 +22,8 @@ Extractor::Extractor(SearchModel* searchModel, QObject *parent)
   , searchModel(searchModel)
 {
   QFuture<QString> initialise;
-  threadPool.setMaxThreadCount(1);
+  threadPool.setMaxThreadCount(0);
+  threadPool.reserveThread();
 
   initialise = QtConcurrent::run(&threadPool, [this]() {
     if (graal_create_isolate(NULL, &isolate, &thread) != 0) {
@@ -50,6 +51,8 @@ Extractor::~Extractor()
     return QString();
   });
   deinitialise.waitForFinished();
+
+  threadPool.releaseThread();
 }
 
 QJsonDocument Extractor::invokeSync(QString const methodName, QJsonDocument const* in)
@@ -165,6 +168,5 @@ void Extractor::downloadExtract(QString const& url)
 
 MediaInfo* Extractor::getMediaInfo(QString const& url) const
 {
-  static MediaInfo nomedia;
-  return mediaInfo.value(url, &nomedia);
+  return mediaInfo.value(url, nullptr);
 }
