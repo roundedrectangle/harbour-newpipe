@@ -1,19 +1,15 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import QtMultimedia 5.0
 import harbour.newpipe.extractor 1.0
+import "../components"
 
 Page {
     id: page
     property alias name: videoTitle.text
-    property alias thumbnail: image.source
+    property alias thumbnail: video.thumbnail
+    property alias source: video.source
     property string url
     property MediaInfo mediaInfo
-
-    MediaPlayer {
-        id: media
-        autoPlay: true
-    }
 
     Connections {
         target: extractor
@@ -21,7 +17,7 @@ Page {
             if (url === page.url) {
                 mediaInfo = extractor.getMediaInfo(url);
                 if (mediaInfo) {
-                    media.source = mediaInfo.getContent();
+                    video.source = mediaInfo.getContent();
                 }
             }
         }
@@ -46,19 +42,10 @@ Page {
                 title: qsTrId("newpipe-video_page-header")
             }
 
-            VideoOutput {
+            VideoPlayer {
                 id: video
                 width: parent.width
                 height: width * (9 / 16)
-                fillMode: Image.PreserveAspectFit
-                source: media
-
-                Image {
-                    id: image
-                    anchors.fill: parent
-                    fillMode: Image.PreserveAspectFit
-                    visible: media.source == ""
-                }
             }
 
             Label {

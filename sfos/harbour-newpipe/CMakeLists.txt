@@ -5,6 +5,7 @@ find_package (Qt5 COMPONENTS Core Network Qml Gui Quick REQUIRED)
 
 include(FindPkgConfig)
 pkg_search_module(SAILFISH sailfishapp REQUIRED)
+pkg_search_module(MLITE5 REQUIRED mlite5)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -19,11 +20,13 @@ target_compile_definitions(harbour-newpipe PRIVATE
 target_include_directories(harbour-newpipe PRIVATE
     $<BUILD_INTERFACE:
     ${SAILFISH_INCLUDE_DIRS}>
+    ${MLITE5_INCLUDE_DIRS}
     PRIVATE "${CMAKE_SOURCE_DIR}/include"
 )
 target_link_libraries(harbour-newpipe
     Qt5::Quick
     ${SAILFISH_LDFLAGS}
+    ${MLITE5_LIBRARIES}
     -l:appwrapper.so
 )
 target_sources(harbour-newpipe PRIVATE
@@ -32,6 +35,8 @@ target_sources(harbour-newpipe PRIVATE
     "src/searchmodel.cpp"
     "src/searchitem.cpp"
     "src/mediainfo.cpp"
+    "src/utils.cpp"
+    "src/imageprovider.cpp"
 )
 install(TARGETS harbour-newpipe
     RUNTIME DESTINATION bin
@@ -61,9 +66,14 @@ install(FILES icons/172x172/harbour-newpipe.png
 install(FILES lib/appwrapper.so
     DESTINATION share/harbour-newpipe/lib
 )
+install(DIRECTORY qml/images/
+    DESTINATION share/harbour-newpipe/qml/images
+    FILES_MATCHING PATTERN "z*/*.png"
+)
 
 # Get the other files reachable from the project tree in Qt Creator
 FILE(GLOB TsFiles "translations/*.ts")
+FILE(GLOB ImageFiles "qml/images/*/*.png")
 add_custom_target(distfiles
     SOURCES
         harbour-newpipe.desktop
@@ -71,11 +81,15 @@ add_custom_target(distfiles
         qml/cover/CoverPage.qml
         qml/pages/SearchPage.qml
         qml/pages/VideoPage.qml
+        qml/components/VideoPlayer.qml
+        qml/components/IconButtonDual.qml
+        qml/icons/
         rpm/harbour-newpipe.changes.in
         rpm/harbour-newpipe.changes.run.in
         rpm/harbour-newpipe.spec
         rpm/harbour-newpipe.yaml
-        ${TsFiles})
+        ${TsFiles}
+        ${ImageFiles})
 
 # Tell Qt Creator where the application executable(s) would be located on the
 # device.
