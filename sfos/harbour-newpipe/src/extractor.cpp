@@ -22,6 +22,7 @@ Extractor::Extractor(SearchModel* searchModel, QObject *parent)
   , searchModel(searchModel)
 {
   QFuture<QString> initialise;
+  threadPool.setExpiryTimeout(-1);
   threadPool.setMaxThreadCount(0);
   threadPool.reserveThread();
 
