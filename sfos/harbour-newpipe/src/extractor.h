@@ -8,6 +8,7 @@
 #include "appwrapper.h"
 
 class SearchModel;
+class CommentModel;
 class MediaInfo;
 
 class Extractor : public QObject
@@ -15,12 +16,13 @@ class Extractor : public QObject
   Q_OBJECT
 public:
   explicit Extractor(QObject *parent = nullptr);
-  explicit Extractor(SearchModel* searchModel, QObject *parent = nullptr);
+  explicit Extractor(SearchModel* searchModel, CommentModel* commentModel, QObject *parent = nullptr);
   ~Extractor();
 
 public slots:
   void search(QString const& searchTerm);
   void downloadExtract(QString const& url);
+  void getComments(QString const& url);
   MediaInfo* getMediaInfo(QString const& url) const;
 
 signals:
@@ -38,6 +40,7 @@ public:
   graal_isolatethread_t* thread;
   QThreadPool threadPool;
   SearchModel* searchModel;
+  CommentModel* commentModel;
   QMap<QString, MediaInfo*> mediaInfo;
 };
 

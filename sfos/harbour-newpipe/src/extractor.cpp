@@ -7,6 +7,7 @@
 
 #include "invoke.h"
 #include "searchmodel.h"
+#include "commentmodel.h"
 #include "mediainfo.h"
 
 #include "extractor.h"
@@ -14,12 +15,14 @@
 Extractor::Extractor(QObject *parent)
   : QObject(parent)
   , searchModel()
+  , commentModel()
 {
 }
 
-Extractor::Extractor(SearchModel* searchModel, QObject *parent)
+Extractor::Extractor(SearchModel* searchModel, CommentModel* commentModel, QObject *parent)
   : QObject(parent)
   , searchModel(searchModel)
+  , commentModel(commentModel)
 {
   QFuture<QString> initialise;
   threadPool.setExpiryTimeout(-1);
@@ -165,6 +168,52 @@ void Extractor::downloadExtract(QString const& url)
     delete watcher;
   });
   watcher->setFuture(invokeAsync("downloadExtract", &document));
+}
+
+void Extractor::getComments(QString const& url)
+{
+  QJsonObject json;
+  QJsonDocument document;
+
+  json["service"] = QStringLiteral("YouTube");
+  json["url"] = url;
+  json["page"] = QJsonValue();
+  document = QJsonDocument(json);
+
+  QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher]() {
+    QJsonDocument result = watcher->result();
+    //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+
+    QJsonArray items = result.object()["relatedItems"].toArray();
+    QList<CommentItem> comments;
+    for (QJsonValue const& item : items) {
+      QJsonObject entry = item.toObject();
+      //qDebug() << "Entry: " << entry["name"].toString();
+
+      QString uploaderAvatarUrl;
+      QJsonArray uploaderAvatars = entry["uploaderAvatars"].toArray();
+      QString resolutionLevel;
+      for (QJsonValue const& uploaderAvatar : uploaderAvatars) {
+        QJsonObject details = uploaderAvatar.toObject();
+        QString estimatedResolutionLevel = details["estimatedResolutionLevel"].toString();
+        if (resolutionLevel.isEmpty() || compareResolutions(resolutionLevel, estimatedResolutionLevel) < 0) {
+          uploaderAvatarUrl = details["url"].toString();
+          resolutionLevel = estimatedResolutionLevel;
+        }
+      }
+
+      QString commentText = entry["commentText"].toObject()["content"].toString();
+      QString uploaderName = entry["uploaderName"].toString();
+      QString uploaderAvatar = uploaderAvatarUrl;
+      CommentItem result(commentText, uploaderName, uploaderAvatar);
+      comments.append(result);
+    }
+    this->commentModel->replaceAll(comments);
+
+    delete watcher;
+  });
+  watcher->setFuture(invokeAsync("getCommentsInfo", &document));
 }
 
 MediaInfo* Extractor::getMediaInfo(QString const& url) const

@@ -123,6 +123,7 @@ Page {
 
             onClicked: {
                 extractor.downloadExtract(model.url);
+                extractor.getComments(model.url);
                 pageStack.push(Qt.resolvedUrl("VideoPage.qml"), {
                     name: model.name,
                     thumbnail: model.thumbnail,

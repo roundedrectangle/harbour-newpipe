@@ -5,9 +5,9 @@ import "../components"
 
 Page {
     id: page
-    property alias name: videoTitle.text
-    property alias thumbnail: video.thumbnail
-    property alias source: video.source
+    property string name
+    property string thumbnail
+    property string source
     property string url
     property MediaInfo mediaInfo
 
@@ -17,21 +17,19 @@ Page {
             if (url === page.url) {
                 mediaInfo = extractor.getMediaInfo(url);
                 if (mediaInfo) {
-                    video.source = mediaInfo.getContent();
+                    source = mediaInfo.getContent();
                 }
             }
         }
     }
 
-    SilicaFlickable {
+    SilicaListView {
+        model: commentModel
         anchors.fill: parent
-        interactive: true
-        contentHeight: column.height + Theme.paddingLarge
-
 
         VerticalScrollDecorator {}
 
-        Column {
+        header: Column {
             id: column
             width: parent.width
             spacing: Theme.paddingLarge
@@ -46,6 +44,8 @@ Page {
                 id: video
                 width: parent.width
                 height: width * (9 / 16)
+                source: page.source
+                thumbnail: page.thumbnail
             }
 
             Label {
@@ -55,8 +55,63 @@ Page {
                 height: Theme.itemSizeMedium
                 color: Theme.highlightColor
                 wrapMode: Text.Wrap
-                text: name
+                text: page.name
+            }
+        }
+
+        delegate: BackgroundItem {
+            id: delegate
+            focus: false
+            height: Theme.itemSizeExtraLarge
+
+            Row {
+                id: commentRow
+                x: Theme.paddingLarge
+                y: Theme.paddingSmall
+                width: parent.width - (2 * Theme.paddingLarge)
+                height: parent.height - (2 * Theme.paddingSmall)
+                spacing: Theme.paddingLarge
+
+                Image {
+                    id: avatar
+                    width: Theme.iconSizeMedium
+                    height: parent.height
+                    fillMode: Image.PreserveAspectFit
+                    verticalAlignment: Image.AlignTop
+                    source: model.uploaderAvatar
+                }
+
+                Column {
+                    id: comment
+                    width: parent.width - avatar.width - Theme.paddingLarge
+                    spacing: Theme.paddingSmall
+
+                    Label {
+                        color: Theme.primaryColor
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        height: Theme.fontSizeExtraSmall
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        text: model.uploaderName
+                        elide: Text.ElideRight
+                        focus: false
+                    }
+
+                    Label {
+                        color: Theme.primaryColor
+                        textFormat: Text.StyledText
+                        width: parent.width
+                        height: commentRow.height - Theme.fontSizeExtraSmall - Theme.paddingSmall
+                        font.pixelSize: Theme.fontSizeSmall
+                        text: model.commentText
+                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                        truncationMode: TruncationMode.Elide
+                        maximumLineCount: 2
+                        focus: false
+                    }
+                }
             }
         }
     }
 }
+

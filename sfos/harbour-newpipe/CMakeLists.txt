@@ -37,6 +37,8 @@ target_sources(harbour-newpipe PRIVATE
     "src/mediainfo.cpp"
     "src/utils.cpp"
     "src/imageprovider.cpp"
+    "src/commentmodel.cpp"
+    "src/commentitem.cpp"
 )
 install(TARGETS harbour-newpipe
     RUNTIME DESTINATION bin

@@ -3,6 +3,7 @@
 #include <sailfishapp.h>
 
 #include "searchmodel.h"
+#include "commentmodel.h"
 #include "extractor.h"
 #include "mediainfo.h"
 #include "utils.h"
@@ -16,7 +17,8 @@ int main(int argc, char *argv[])
   QCoreApplication::setOrganizationName("uk.co.flypig");
   QCoreApplication::setApplicationName("harbour-newpipe");
   QScopedPointer<SearchModel> searchModel(new SearchModel(app.data()));
-  QScopedPointer<Extractor> extractor(new Extractor(searchModel.data(), app.data()));
+  QScopedPointer<CommentModel> commentModel(new CommentModel(app.data()));
+  QScopedPointer<Extractor> extractor(new Extractor(searchModel.data(), commentModel.data(), app.data()));
   QScopedPointer<QQuickView> view(SailfishApp::createView());
   QQmlContext *ctxt = view->rootContext();
   Utils::instantiate();
@@ -29,6 +31,7 @@ int main(int argc, char *argv[])
 
   ctxt->setContextProperty("extractor", extractor.data());
   ctxt->setContextProperty("searchModel", searchModel.data());
+  ctxt->setContextProperty("commentModel", commentModel.data());
 
   view->setSource(SailfishApp::pathTo("qml/harbour-newpipe.qml"));
   view->show();
