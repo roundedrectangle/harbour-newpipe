@@ -10,6 +10,7 @@ SilicaControl {
     property int bottomMargin: Theme.paddingMedium
     property int collapsedHeight: Theme.itemSizeExtraLarge
     property int expandedHeight: Theme.fontSizeExtraSmall + Theme.paddingSmall + mainCommentText.contentHeight + (2 * Theme.paddingSmall)
+    readonly property bool expandable: expandedHeight > collapsedHeight
 
     property string uploaderAvatar
     property string uploaderName
@@ -47,6 +48,7 @@ SilicaControl {
             fill: parent
             bottomMargin: root.bottomMargin
         }
+        enabled: expandable
         onClicked: parent.clicked()
     }
 
@@ -98,10 +100,32 @@ SilicaControl {
                     font.pixelSize: Theme.fontSizeSmall
                     text: commentText
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                    maximumLineCount: _open ? (2^31 - 1) : 3
                     focus: false
                 }
             }
         }
+    }
+
+    Icon {
+        id: icon
+        opacity: expandable ? 1.0 : 0.0
+        Behavior on opacity { FadeAnimator {}}
+        anchors {
+            right: parent.right
+            bottom: parent.bottom
+            rightMargin: horizontalMargin
+            bottomMargin: Theme.paddingSmall
+        }
+        source: "image://theme/icon-lock-more"
+    }
+
+    OpacityRampEffect {
+        property real ratio: expandable ? (expandedHeight - height) / (expandedHeight - collapsedHeight)
+                                        : 1.0
+        slope: 2 * Math.min(1.0, ratio)
+        offset: 0.5
+        sourceItem: delegate
+        enabled: expandable && !(open && !animation.running)
+        direction: OpacityRamp.TopToBottom
     }
 }
