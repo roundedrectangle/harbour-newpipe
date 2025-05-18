@@ -59,58 +59,10 @@ Page {
             }
         }
 
-        delegate: BackgroundItem {
-            id: delegate
-            focus: false
-            height: Theme.itemSizeExtraLarge
-
-            Row {
-                id: commentRow
-                x: Theme.paddingLarge
-                y: Theme.paddingSmall
-                width: parent.width - (2 * Theme.paddingLarge)
-                height: parent.height - (2 * Theme.paddingSmall)
-                spacing: Theme.paddingLarge
-
-                Image {
-                    id: avatar
-                    width: Theme.iconSizeMedium
-                    height: parent.height
-                    fillMode: Image.PreserveAspectFit
-                    verticalAlignment: Image.AlignTop
-                    source: model.uploaderAvatar
-                }
-
-                Column {
-                    id: comment
-                    width: parent.width - avatar.width - Theme.paddingLarge
-                    spacing: Theme.paddingSmall
-
-                    Label {
-                        color: Theme.primaryColor
-                        textFormat: Text.PlainText
-                        width: parent.width
-                        height: Theme.fontSizeExtraSmall
-                        font.pixelSize: Theme.fontSizeExtraSmall
-                        text: model.uploaderName
-                        elide: Text.ElideRight
-                        focus: false
-                    }
-
-                    Label {
-                        color: Theme.primaryColor
-                        textFormat: Text.StyledText
-                        width: parent.width
-                        height: commentRow.height - Theme.fontSizeExtraSmall - Theme.paddingSmall
-                        font.pixelSize: Theme.fontSizeSmall
-                        text: model.commentText
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        truncationMode: TruncationMode.Elide
-                        maximumLineCount: 2
-                        focus: false
-                    }
-                }
-            }
+        delegate: CommentItem {
+            uploaderAvatar: model.uploaderAvatar
+            uploaderName: model.uploaderName
+            commentText: model.commentText
         }
     }
 }
