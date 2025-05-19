@@ -13,6 +13,8 @@ public:
     CommentTextRole = Qt::UserRole + 1,
     UploaderNameRole,
     UploaderAvatarRole,
+    ReplyCountRole,
+    PageRole,
   };
 
   explicit CommentModel(QObject *parent = nullptr);
@@ -23,11 +25,11 @@ public:
 
   QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
 
-  void replaceAll(QList<CommentItem> const& commentResults);
+  void replaceAll(QList<CommentItem const*> const& commentResults);
 
 private:
-  QHash<int, QByteArray> roles;
-  QList<CommentItem> commentResults;
+  QHash<int, QByteArray> m_roles;
+  QList<CommentItem const*> m_commentResults;
 };
 
 #endif // COMMENTMODEL_H

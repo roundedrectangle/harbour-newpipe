@@ -9,6 +9,7 @@ class MediaInfo : public QObject
 public:
   explicit MediaInfo(QObject *parent = nullptr);
   explicit MediaInfo(QString const& url, QString const& name, QString const& uploaderName, QString const& category, int viewCount, int likeCount, QString const& content, QObject *parent = nullptr);
+  explicit MediaInfo(QJsonObject const& json, QObject *parent = nullptr);
 
 public slots:
   QString getUrl() const;
@@ -27,16 +28,16 @@ public slots:
   void setLikeCount(int likeCount);
   void setContent(QString const& content);
 
-signals:
+  void parseJson(QJsonObject const& json);
 
 private:
-  QString url;
-  QString name;
-  QString uploaderName;
-  QString category;
-  int viewCount;
-  int likeCount;
-  QString content;
+  QString m_url;
+  QString m_name;
+  QString m_uploaderName;
+  QString m_category;
+  int m_viewCount;
+  int m_likeCount;
+  QString m_content;
 };
 
 #endif // MEDIAINFO_H

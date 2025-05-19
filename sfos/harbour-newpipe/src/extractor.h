@@ -19,11 +19,13 @@ public:
   explicit Extractor(SearchModel* searchModel, CommentModel* commentModel, QObject *parent = nullptr);
   ~Extractor();
 
+  static int compareResolutions(QString const& first, QString const& second);
+
 public slots:
   void search(QString const& searchTerm);
   void downloadExtract(QString const& url);
   void getComments(QString const& url);
-  MediaInfo* getMediaInfo(QString const& url) const;
+  MediaInfo const* getMediaInfo(QString const& url) const;
 
 signals:
   void extracted(QString const& url);
@@ -33,15 +35,13 @@ private:
 
   QFuture<QJsonDocument> invokeAsync(QString const methodName, QJsonDocument const* in);
 
-  static int compareResolutions(QString const& first, QString const& second);
-
 public:
-  graal_isolate_t* isolate;
-  graal_isolatethread_t* thread;
-  QThreadPool threadPool;
-  SearchModel* searchModel;
-  CommentModel* commentModel;
-  QMap<QString, MediaInfo*> mediaInfo;
+  graal_isolate_t* m_isolate;
+  graal_isolatethread_t* m_thread;
+  QThreadPool m_threadPool;
+  SearchModel* m_searchModel;
+  CommentModel* m_commentModel;
+  QMap<QString, MediaInfo const*> m_mediaInfo;
 };
 
 #endif // EXTRACTOR_H

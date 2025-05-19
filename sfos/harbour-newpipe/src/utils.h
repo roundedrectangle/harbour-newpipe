@@ -17,7 +17,7 @@ public:
   Q_INVOKABLE static QString millisecondsToTime(quint32 milliseconds);
 
 private:
-  static Utils* instance;
+  static Utils* m_instance;
 };
 
 #endif // UTILS_H

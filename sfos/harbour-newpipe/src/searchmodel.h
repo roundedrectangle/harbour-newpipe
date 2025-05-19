@@ -23,11 +23,11 @@ public:
 
   QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
 
-  void replaceAll(QList<SearchItem> const& searchResults);
+  void replaceAll(QList<SearchItem const*> const& searchResults);
 
 private:
-  QHash<int, QByteArray> roles;
-  QList<SearchItem> searchResults;
+  QHash<int, QByteArray> m_roles;
+  QList<SearchItem const*> m_searchResults;
 };
 
 #endif // SEARCHMODEL_H

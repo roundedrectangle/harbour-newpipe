@@ -6,9 +6,9 @@
 
 Invoke::Invoke(Extractor* extractor, QString const methodName, QJsonDocument const* in)
   : QObject(dynamic_cast<QObject*>(extractor))
-  , extractor(extractor)
-  , methodName(methodName)
-  , in(*in)
+  , m_extractor(extractor)
+  , m_methodName(methodName)
+  , m_in(*in)
 {
 }
 
@@ -17,7 +17,7 @@ QJsonDocument Invoke::run()
   char const* result;
   QJsonDocument document;
 
-  result = invoke(extractor->thread, methodName.toLatin1().data(), in.toJson().data());
+  result = invoke(m_extractor->m_thread, m_methodName.toLatin1().data(), m_in.toJson().data());
   QJsonParseError error;
   document = QJsonDocument::fromJson(QByteArray(result), &error);
   if (document.isNull()) {

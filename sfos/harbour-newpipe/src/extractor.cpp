@@ -9,31 +9,32 @@
 #include "searchmodel.h"
 #include "commentmodel.h"
 #include "mediainfo.h"
+#include "page.h"
 
 #include "extractor.h"
 
 Extractor::Extractor(QObject *parent)
   : QObject(parent)
-  , searchModel()
-  , commentModel()
+  , m_searchModel()
+  , m_commentModel()
 {
 }
 
 Extractor::Extractor(SearchModel* searchModel, CommentModel* commentModel, QObject *parent)
   : QObject(parent)
-  , searchModel(searchModel)
-  , commentModel(commentModel)
+  , m_searchModel(searchModel)
+  , m_commentModel(commentModel)
 {
   QFuture<QString> initialise;
-  threadPool.setExpiryTimeout(-1);
-  threadPool.setMaxThreadCount(0);
-  threadPool.reserveThread();
+  m_threadPool.setExpiryTimeout(-1);
+  m_threadPool.setMaxThreadCount(0);
+  m_threadPool.reserveThread();
 
-  initialise = QtConcurrent::run(&threadPool, [this]() {
-    if (graal_create_isolate(NULL, &isolate, &thread) != 0) {
+  initialise = QtConcurrent::run(&m_threadPool, [this]() {
+    if (graal_create_isolate(NULL, &m_isolate, &m_thread) != 0) {
         fprintf(stderr, "initialization error\n");
     }
-    init(thread);
+    init(m_thread);
     return QString();
   });
   initialise.waitForFinished();
@@ -43,20 +44,20 @@ Extractor::~Extractor()
 {
   QFuture<QString> deinitialise;
 
-  deinitialise = QtConcurrent::run(&threadPool, [this]() {
+  deinitialise = QtConcurrent::run(&m_threadPool, [this]() {
     char* result;
-    result = invoke(thread, const_cast<char *>("tearDown"), const_cast<char *>("{}"));
+    result = invoke(m_thread, const_cast<char *>("tearDown"), const_cast<char *>("{}"));
     return QString(result);
   });
   deinitialise.waitForFinished();
 
-  deinitialise = QtConcurrent::run(&threadPool, [this]() {
-    graal_detach_thread(thread);
+  deinitialise = QtConcurrent::run(&m_threadPool, [this]() {
+    graal_detach_thread(m_thread);
     return QString();
   });
   deinitialise.waitForFinished();
 
-  threadPool.releaseThread();
+  m_threadPool.releaseThread();
 }
 
 QJsonDocument Extractor::invokeSync(QString const methodName, QJsonDocument const* in)
@@ -68,7 +69,7 @@ QJsonDocument Extractor::invokeSync(QString const methodName, QJsonDocument cons
 QFuture<QJsonDocument> Extractor::invokeAsync(QString const methodName, QJsonDocument const* in)
 {
   Invoke* invoke = new Invoke(this, methodName, in);
-  return QtConcurrent::run(&threadPool, invoke, &Invoke::run);
+  return QtConcurrent::run(&m_threadPool, invoke, &Invoke::run);
 }
 
 void Extractor::search(QString const& searchTerm)
@@ -90,28 +91,12 @@ void Extractor::search(QString const& searchTerm)
     //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
     QJsonArray items = result.object()["relatedItems"].toArray();
-    QList<SearchItem> searchResults;
+    QList<SearchItem const*> searchResults;
     for (QJsonValue const& item : items) {
-      QJsonObject entry = item.toObject();
-      //qDebug() << "Entry: " << entry["name"].toString();
-
-      QString thumbnailUrl;
-      QJsonArray thumbnails = entry["thumbnails"].toArray();
-      QString resolutionLevel;
-      for (QJsonValue const& thumbnail : thumbnails) {
-        QJsonObject details = thumbnail.toObject();
-        QString estimatedResolutionLevel = details["estimatedResolutionLevel"].toString();
-        if (resolutionLevel.isEmpty() || compareResolutions(resolutionLevel, estimatedResolutionLevel) < 0) {
-          thumbnailUrl = details["url"].toString();
-          resolutionLevel = estimatedResolutionLevel;
-        }
-      }
-      QString name = entry["name"].toString();
-      QString url = entry["url"].toString();
-      SearchItem result(name, thumbnailUrl, url);
-      searchResults.append(result);
+      SearchItem const* deserialised = new SearchItem(item.toObject(), m_searchModel);
+      searchResults.append(deserialised);
     }
-    this->searchModel->replaceAll(searchResults);
+    m_searchModel->replaceAll(searchResults);
 
     delete watcher;
   });
@@ -145,23 +130,9 @@ void Extractor::downloadExtract(QString const& url)
   QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, url]() {
     QJsonDocument result = watcher->result();
     //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
-    QJsonObject root = result.object();
-    QString name = root["name"].toString();
-    QString uploaderName = root["uploaderName"].toString();
-    QString category = root["category"].toString();
-    int viewCount = root["likeCount"].toInt();
-    int likeCount = root["viewCount"].toInt();
-    QString content = root["content"].toString();
 
-    qDebug() << "Name: " << name;
-    qDebug() << "Uploader name: " << uploaderName;
-    qDebug() << "Category: " << category;
-    qDebug() << "View Count: " << viewCount;
-    qDebug() << "Like Count: " << likeCount;
-    qDebug() << "Content: " << content;
-
-    MediaInfo* info = new MediaInfo(url, name, uploaderName, category, viewCount, likeCount, content, this);
-    mediaInfo.insert(url, info);
+    MediaInfo const* deserialised = new MediaInfo(result.object(), this);
+    m_mediaInfo.insert(url, deserialised);
 
     emit extracted(url);
 
@@ -186,37 +157,19 @@ void Extractor::getComments(QString const& url)
     //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
     QJsonArray items = result.object()["relatedItems"].toArray();
-    QList<CommentItem> comments;
+    QList<CommentItem const*> comments;
     for (QJsonValue const& item : items) {
-      QJsonObject entry = item.toObject();
-      //qDebug() << "Entry: " << entry["name"].toString();
-
-      QString uploaderAvatarUrl;
-      QJsonArray uploaderAvatars = entry["uploaderAvatars"].toArray();
-      QString resolutionLevel;
-      for (QJsonValue const& uploaderAvatar : uploaderAvatars) {
-        QJsonObject details = uploaderAvatar.toObject();
-        QString estimatedResolutionLevel = details["estimatedResolutionLevel"].toString();
-        if (resolutionLevel.isEmpty() || compareResolutions(resolutionLevel, estimatedResolutionLevel) < 0) {
-          uploaderAvatarUrl = details["url"].toString();
-          resolutionLevel = estimatedResolutionLevel;
-        }
-      }
-
-      QString commentText = entry["commentText"].toObject()["content"].toString();
-      QString uploaderName = entry["uploaderName"].toString();
-      QString uploaderAvatar = uploaderAvatarUrl;
-      CommentItem result(commentText, uploaderName, uploaderAvatar);
-      comments.append(result);
+      CommentItem const* deserialised = new CommentItem(item.toObject(), m_commentModel);
+      comments.append(deserialised);
     }
-    this->commentModel->replaceAll(comments);
+    m_commentModel->replaceAll(comments);
 
     delete watcher;
   });
   watcher->setFuture(invokeAsync("getCommentsInfo", &document));
 }
 
-MediaInfo* Extractor::getMediaInfo(QString const& url) const
+MediaInfo const* Extractor::getMediaInfo(QString const& url) const
 {
-  return mediaInfo.value(url, nullptr);
+  return m_mediaInfo.value(url, nullptr);
 }

@@ -14,9 +14,9 @@ public:
   QJsonDocument run();
 
 private:
-  Extractor const* extractor;
-  QString methodName;
-  QJsonDocument in;
+  Extractor const* m_extractor;
+  QString m_methodName;
+  QJsonDocument m_in;
 
 signals:
 };

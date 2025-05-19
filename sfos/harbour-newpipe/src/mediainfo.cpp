@@ -1,96 +1,116 @@
+#include <QJsonObject>
+
 #include "mediainfo.h"
 
 MediaInfo::MediaInfo(QObject *parent)
   : QObject(parent)
-  , name()
-  , uploaderName()
-  , category()
-  , viewCount(0)
-  , likeCount(0)
-  , content()
+  , m_name()
+  , m_uploaderName()
+  , m_category()
+  , m_viewCount(0)
+  , m_likeCount(0)
+  , m_content()
 {
 }
 
 MediaInfo::MediaInfo(QString const& url, QString const& name, QString const& uploaderName, QString const& category, int viewCount, int likeCount, QString const& content, QObject *parent)
   : QObject(parent)
-  , url(url)
-  , name(name)
-  , uploaderName(uploaderName)
-  , category(category)
-  , viewCount(viewCount)
-  , likeCount(likeCount)
-  , content(content)
+  , m_url(url)
+  , m_name(name)
+  , m_uploaderName(uploaderName)
+  , m_category(category)
+  , m_viewCount(viewCount)
+  , m_likeCount(likeCount)
+  , m_content(content)
 {
 
+}
+
+MediaInfo::MediaInfo(QJsonObject const& json, QObject *parent)
+  : QObject(parent)
+{
+  parseJson(json);
 }
 
 QString MediaInfo::getUrl() const
 {
-  return url;
+  return m_url;
 }
 
 QString MediaInfo::getName() const
 {
-  return name;
+  return m_name;
 }
 
 QString MediaInfo::getUploaderName() const
 {
-  return uploaderName;
+  return m_uploaderName;
 }
 
 QString MediaInfo::getCategory() const
 {
-  return category;
+  return m_category;
 }
 
 int MediaInfo::getViewCount() const
 {
-  return viewCount;
+  return m_viewCount;
 }
 
 int MediaInfo::getLikeCount() const
 {
-  return likeCount;
+  return m_likeCount;
 }
 
 QString MediaInfo::getContent() const
 {
-  return content;
+  return m_content;
 }
 
 void MediaInfo::setUrl(QString const& url)
 {
-  this->url = url;
+  m_url = url;
 }
 
 void MediaInfo::setName(QString const& name)
 {
-  this->name = name;
+  m_name = name;
 }
 
 void MediaInfo::setUploaderName(QString const& uploaderName)
 {
-  this->uploaderName = uploaderName;
+  m_uploaderName = uploaderName;
 }
 
 void MediaInfo::setCategory(QString const& category)
 {
-  this->category = category;
+  m_category = category;
 }
 
 void MediaInfo::setViewCount(int viewCount)
 {
-  this->viewCount = viewCount;
+  m_viewCount = viewCount;
 }
 
 void MediaInfo::setLikeCount(int likeCount)
 {
-  this->likeCount = likeCount;
+  m_likeCount = likeCount;
 }
 
 void MediaInfo::setContent(QString const& content)
 {
-  this->content = content;
+  m_content = content;
 }
+
+void MediaInfo::parseJson(QJsonObject const& json)
+{
+  m_name = json["name"].toString();
+  m_uploaderName = json["uploaderName"].toString();
+  m_category = json["category"].toString();
+  m_viewCount = json["likeCount"].toInt();
+  m_likeCount = json["viewCount"].toInt();
+  m_content = json["content"].toString();
+}
+
+
 

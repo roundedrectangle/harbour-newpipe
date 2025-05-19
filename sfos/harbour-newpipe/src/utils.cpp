@@ -2,7 +2,7 @@
 
 #include "utils.h"
 
-Utils* Utils::instance = nullptr;
+Utils* Utils::m_instance = nullptr;
 
 Utils::Utils(QObject *parent) : QObject(parent)
 {
@@ -10,20 +10,20 @@ Utils::Utils(QObject *parent) : QObject(parent)
 }
 
 void Utils::instantiate(QObject* parent) {
-    if (instance == nullptr) {
-        instance = new Utils(parent);
+    if (m_instance == nullptr) {
+        m_instance = new Utils(parent);
     }
 }
 
 Utils& Utils::getInstance() {
-    return *instance;
+    return *m_instance;
 }
 
 QObject* Utils::provider(QQmlEngine* engine, QJSEngine* scriptEngine) {
     Q_UNUSED(engine)
     Q_UNUSED(scriptEngine)
 
-    return instance;
+    return m_instance;
 }
 
 QString Utils::millisecondsToTime(quint32 milliseconds)

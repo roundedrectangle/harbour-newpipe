@@ -28,13 +28,13 @@ ImageProvider::ImageProvider() : QQuickImageProvider(QQuickImageProvider::Pixmap
       dir = "1.0";
   }
 
-  imageDir = SailfishApp::pathTo("qml/images/z" + dir).toString(QUrl::RemoveScheme) + "/";
+  m_imageDir = SailfishApp::pathTo("qml/images/z" + dir).toString(QUrl::RemoveScheme) + "/";
 }
 
 QPixmap ImageProvider::requestPixmap(const QString &id, QSize *size, const QSize &requestedSize) {
     QPixmap image;
     QStringList parts = id.split('?');
-    QPixmap sourcePixmap(imageDir + parts.at(0) + ".png");
+    QPixmap sourcePixmap(m_imageDir + parts.at(0) + ".png");
 
     if (size) {
         *size = sourcePixmap.size();

@@ -10,7 +10,7 @@ public:
 
     QPixmap requestPixmap(const QString &id, QSize *size, const QSize &requestedSize);
 private:
-    QString imageDir;
+    QString m_imageDir;
 };
 
 #endif // IMAGEPROVIDER_H
