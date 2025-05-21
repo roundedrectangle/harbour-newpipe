@@ -1,11 +1,10 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 
-SilicaControl {
+ListItem {
     id: root
 
     property bool open: false
-    property bool _open: false
     property int horizontalMargin: Theme.horizontalPageMargin
     property int bottomMargin: Theme.paddingMedium
     property int collapsedHeight: Theme.itemSizeExtraLarge
@@ -16,40 +15,16 @@ SilicaControl {
     property string uploaderName
     property string commentText
 
-    signal clicked
-
     width: parent ? parent.width : Screen.width
-    height: _open ? expandedHeight : collapsedHeight
+    contentHeight: collapsedHeight
+    state: "collapsed"
 
-    highlighted: content.pressed && content.containsMouse
+    menu: menuComponent
 
-    onClicked: open = !open
-    onOpenChanged: {
-        heightBehavior.enabled = true
-        _open = open
-        heightBehavior.enabled = false
-    }
-
-    Behavior on height {
-        id: heightBehavior
-        enabled: false
-        NumberAnimation {
-            id: animation
-            target: root
-            property: "height"
-            duration: expandedHeight > Screen.height ? 400 : 200
-            easing.type: Easing.InOutQuad
+    onClicked: {
+        if (expandable) {
+            open = !open
         }
-    }
-
-    MouseArea {
-        id: content
-        anchors {
-            fill: parent
-            bottomMargin: root.bottomMargin
-        }
-        enabled: expandable
-        onClicked: parent.clicked()
     }
 
     Item {
@@ -120,12 +95,51 @@ SilicaControl {
     }
 
     OpacityRampEffect {
-        property real ratio: expandable ? (expandedHeight - height) / (expandedHeight - collapsedHeight)
+        property real ratio: expandable ? (expandedHeight - contentHeight) / (expandedHeight - collapsedHeight)
                                         : 1.0
         slope: 2 * Math.min(1.0, ratio)
         offset: 0.5
         sourceItem: delegate
-        enabled: expandable && !(open && !animation.running)
+        enabled: expandable && (state != "expanded")
         direction: OpacityRamp.TopToBottom
+    }
+
+    Component {
+        id: menuComponent
+        ContextMenu {
+            MenuItem {
+                //% "%d replies"
+                text: qsTrId("newpipe-comment_item-replies")
+                onClicked: console.log("Cliicked")
+            }
+        }
+    }
+
+    states: [
+        State {
+            when: root.closed
+            name: "collapsed"
+            PropertyChanges {
+                target: root
+                contentHeight: collapsedHeight
+            }
+        },
+        State {
+            when: root.open
+            name: "expanded"
+            PropertyChanges {
+                target: root
+                contentHeight: expandedHeight
+            }
+        }
+    ]
+
+    transitions: Transition {
+        NumberAnimation {
+            id: animation
+            properties: "contentHeight"
+            easing.type: Easing.InOutQuad
+            duration: expandedHeight > Screen.height ? 400 : 200
+        }
     }
 }
