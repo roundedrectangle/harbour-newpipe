@@ -9,7 +9,7 @@
 #include "searchmodel.h"
 #include "commentmodel.h"
 #include "mediainfo.h"
-#include "page.h"
+#include "pageref.h"
 
 #include "extractor.h"
 
@@ -17,6 +17,7 @@ Extractor::Extractor(QObject *parent)
   : QObject(parent)
   , m_searchModel()
   , m_commentModel()
+  , m_page(new PageRef())
 {
 }
 
@@ -24,6 +25,7 @@ Extractor::Extractor(SearchModel* searchModel, CommentModel* commentModel, QObje
   : QObject(parent)
   , m_searchModel(searchModel)
   , m_commentModel(commentModel)
+  , m_page(new PageRef())
 {
   QFuture<QString> initialise;
   m_threadPool.setExpiryTimeout(-1);
@@ -131,7 +133,7 @@ void Extractor::downloadExtract(QString const& url)
     QJsonDocument result = watcher->result();
     //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
-    MediaInfo const* deserialised = new MediaInfo(result.object(), this);
+    MediaInfo* deserialised = new MediaInfo(result.object(), this);
     m_mediaInfo.insert(url, deserialised);
 
     emit extracted(url);
@@ -169,7 +171,39 @@ void Extractor::getComments(QString const& url)
   watcher->setFuture(invokeAsync("getCommentsInfo", &document));
 }
 
-MediaInfo const* Extractor::getMediaInfo(QString const& url) const
+void Extractor::getMoreComments(QString const& url, PageRef* page)
+{
+  QJsonObject json;
+  QJsonDocument document;
+
+  qDebug() << "URL: " << url;
+  qDebug() << "Page URL: " << page->getUrl();
+
+  json["service"] = QStringLiteral("YouTube");
+  json["url"] = url;
+  json["page"] = page->toJson();
+  document = QJsonDocument(json);
+
+  QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher]() {
+    QJsonDocument result = watcher->result();
+    //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+
+    QJsonArray items = result.object()["itemsList"].toArray();
+    QList<CommentItem const*> comments;
+    for (QJsonValue const& item : items) {
+      CommentItem const* deserialised = new CommentItem(item.toObject(), m_commentModel);
+      comments.append(deserialised);
+    }
+    m_commentModel->replaceAll(comments);
+    m_page->parseJson(result.object()["nextPage"].toObject());
+
+    delete watcher;
+  });
+  watcher->setFuture(invokeAsync("getMoreCommentItems", &document));
+}
+
+MediaInfo* Extractor::getMediaInfo(QString const& url) const
 {
   return m_mediaInfo.value(url, nullptr);
 }

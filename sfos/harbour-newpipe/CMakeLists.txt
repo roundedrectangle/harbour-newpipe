@@ -39,7 +39,7 @@ target_sources(harbour-newpipe PRIVATE
     "src/imageprovider.cpp"
     "src/commentmodel.cpp"
     "src/commentitem.cpp"
-    "src/page.cpp"
+    "src/pageref.cpp"
 )
 install(TARGETS harbour-newpipe
     RUNTIME DESTINATION bin
@@ -84,6 +84,7 @@ add_custom_target(distfiles
         qml/cover/CoverPage.qml
         qml/pages/SearchPage.qml
         qml/pages/VideoPage.qml
+        qml/pages/RepliesPage.qml
         qml/components/VideoPlayer.qml
         qml/components/IconButtonDual.qml
         qml/components/CommentItem.qml

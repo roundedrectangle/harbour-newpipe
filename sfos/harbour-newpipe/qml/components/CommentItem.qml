@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import harbour.newpipe.extractor 1.0
 
 ListItem {
     id: root
@@ -11,9 +12,12 @@ ListItem {
     property int expandedHeight: Theme.fontSizeExtraSmall + Theme.paddingSmall + mainCommentText.contentHeight + (2 * Theme.paddingSmall)
     readonly property bool expandable: expandedHeight > collapsedHeight
 
+    property string url
     property string uploaderAvatar
     property string uploaderName
     property string commentText
+    property int replyCount
+    property PageRef page
 
     width: parent ? parent.width : Screen.width
     contentHeight: collapsedHeight
@@ -108,9 +112,19 @@ ListItem {
         id: menuComponent
         ContextMenu {
             MenuItem {
-                //% "%d replies"
-                text: qsTrId("newpipe-comment_item-replies")
-                onClicked: console.log("Cliicked")
+                //% "%n replies"
+                text: qsTrId("newpipe-comment_item-replies").arg(replyCount)
+                onClicked: {
+                    console.log("Cliicked")
+                    extractor.getMoreComments(root.url, page);
+                    pageStack.push(Qt.resolvedUrl("../pages/RepliesPage.qml"), {
+                        url: root.url,
+                        uploaderAvatar: uploaderAvatar,
+                        uploaderName: uploaderName,
+                        commentText: commentText,
+                        page: page
+                    });
+                }
             }
         }
     }

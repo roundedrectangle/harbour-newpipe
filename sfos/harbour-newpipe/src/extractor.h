@@ -10,6 +10,7 @@
 class SearchModel;
 class CommentModel;
 class MediaInfo;
+class PageRef;
 
 class Extractor : public QObject
 {
@@ -25,7 +26,8 @@ public slots:
   void search(QString const& searchTerm);
   void downloadExtract(QString const& url);
   void getComments(QString const& url);
-  MediaInfo const* getMediaInfo(QString const& url) const;
+  void getMoreComments(QString const& url, PageRef* page);
+  MediaInfo* getMediaInfo(QString const& url) const;
 
 signals:
   void extracted(QString const& url);
@@ -41,7 +43,8 @@ public:
   QThreadPool m_threadPool;
   SearchModel* m_searchModel;
   CommentModel* m_commentModel;
-  QMap<QString, MediaInfo const*> m_mediaInfo;
+  QMap<QString, MediaInfo*> m_mediaInfo;
+  PageRef* m_page;
 };
 
 #endif // EXTRACTOR_H

@@ -8,6 +8,7 @@
 #include "mediainfo.h"
 #include "utils.h"
 #include "imageprovider.h"
+#include "pageref.h"
 
 int main(int argc, char *argv[])
 {
@@ -25,6 +26,7 @@ int main(int argc, char *argv[])
 
   qmlRegisterType<Extractor>("harbour.newpipe.extractor", 1, 0, "Extractor");
   qmlRegisterType<MediaInfo>("harbour.newpipe.extractor", 1, 0, "MediaInfo");
+  qmlRegisterType<PageRef>("harbour.newpipe.extractor", 1, 0, "PageRef");
   qmlRegisterSingletonType<Utils>("harbour.newpipe.extractor", 1, 0, "Utils", Utils::provider);
 
   view->engine()->addImageProvider(QLatin1String("newpipe"), new ImageProvider());

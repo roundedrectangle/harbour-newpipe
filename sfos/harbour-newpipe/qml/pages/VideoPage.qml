@@ -4,7 +4,7 @@ import harbour.newpipe.extractor 1.0
 import "../components"
 
 Page {
-    id: page
+    id: root
     property string name
     property string thumbnail
     property string source
@@ -14,7 +14,7 @@ Page {
     Connections {
         target: extractor
         onExtracted: {
-            if (url === page.url) {
+            if (url === root.url) {
                 mediaInfo = extractor.getMediaInfo(url);
                 if (mediaInfo) {
                     source = mediaInfo.getContent();
@@ -44,8 +44,8 @@ Page {
                 id: video
                 width: parent.width
                 height: width * (9 / 16)
-                source: page.source
-                thumbnail: page.thumbnail
+                source: root.source
+                thumbnail: root.thumbnail
             }
 
             Label {
@@ -55,14 +55,17 @@ Page {
                 height: Theme.itemSizeMedium
                 color: Theme.highlightColor
                 wrapMode: Text.Wrap
-                text: page.name
+                text: root.name
             }
         }
 
         delegate: CommentItem {
+            url: root.url
             uploaderAvatar: model.uploaderAvatar
             uploaderName: model.uploaderName
             commentText: model.commentText
+            replyCount: model.replyCount
+            page: model.page
         }
     }
 }

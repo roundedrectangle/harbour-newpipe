@@ -1,16 +1,16 @@
-#ifndef PAGE_H
-#define PAGE_H
+#ifndef PAGEREF_H
+#define PAGEREF_H
 
 #include <QObject>
 #include <QMap>
 
-class Page : public QObject
+class PageRef : public QObject
 {
   Q_OBJECT
 public:
-  explicit Page(QObject *parent = nullptr);
-  explicit Page(QString const& url, QString const& id, QStringList const& ids, QMap<QString, QString> const& cookies, QString const& body, QObject *parent = nullptr);
-  explicit Page(QJsonObject const& json, QObject *parent = nullptr);
+  explicit PageRef(QObject *parent = nullptr);
+  explicit PageRef(QString const& url, QString const& id, QStringList const& ids, QMap<QString, QString> const& cookies, QString const& body, QObject *parent = nullptr);
+  explicit PageRef(QJsonObject const& json, QObject *parent = nullptr);
 
   QString getUrl() const;
   QString getId() const;
@@ -25,6 +25,7 @@ public:
   void setBody(QString const& body);
 
   void parseJson(QJsonObject const& json);
+  QJsonObject toJson() const;
 
 signals:
 
@@ -36,4 +37,4 @@ private:
   QString m_body;
 };
 
-#endif // PAGE_H
+#endif // PAGEREF_H

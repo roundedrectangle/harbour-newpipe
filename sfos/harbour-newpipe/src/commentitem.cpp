@@ -3,7 +3,7 @@
 #include <QJsonArray>
 
 #include "extractor.h"
-#include "page.h"
+#include "pageref.h"
 
 #include "commentitem.h"
 
@@ -18,7 +18,7 @@ CommentItem::CommentItem(QObject *parent)
 
 }
 
-CommentItem::CommentItem(QString const& commentText, QString const& uploaderName, QString const& uploaderAvatar, qint64 replyCount, Page* page, QObject *parent)
+CommentItem::CommentItem(QString const& commentText, QString const& uploaderName, QString const& uploaderAvatar, qint64 replyCount, PageRef* page, QObject *parent)
   : QObject(parent)
   , m_commentText(commentText)
   , m_uploaderName(uploaderName)
@@ -54,7 +54,7 @@ qint64 CommentItem::getReplyCount() const
   return m_replyCount;
 }
 
-Page* CommentItem::getPage() const
+PageRef* CommentItem::getPage() const
 {
   return m_page;
 }
@@ -79,7 +79,7 @@ void CommentItem::setReplyCount(qint64 replyCount)
   m_replyCount = replyCount;
 }
 
-void CommentItem::setPage(Page* page)
+void CommentItem::setPage(PageRef* page)
 {
   m_page = page;
 }
@@ -101,5 +101,5 @@ void CommentItem::parseJson(QJsonObject const& json)
   m_uploaderName = json["uploaderName"].toString();
   m_uploaderAvatar = uploaderAvatarUrl;
   m_replyCount = json["replyCount"].toInt(0);
-  m_page = new Page(json["replies"].toObject(), this);
+  m_page = new PageRef(json["replies"].toObject(), this);
 }
