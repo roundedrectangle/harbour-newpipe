@@ -221,7 +221,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             minimumValue: 0
-            maximumValue: media.duration
+            maximumValue: Math.max(1, media.duration)
             stepSize: 1
             value: 0
             enabled: media.seekable
