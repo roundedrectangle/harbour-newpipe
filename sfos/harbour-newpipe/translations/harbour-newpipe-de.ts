@@ -1,37 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1">
+<TS version="2.1" language="de">
+<context>
+    <name></name>
+    <message id="newpipe-comment_item-replies" numerus="yes">
+        <source>%n replies</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message id="newpipe-replies_page-header">
+        <source>Replies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-proglist_search-placeholder">
+        <source>Search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-proglist_search-no-entries">
+        <source>No entries</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-proglist_search-enter-some-text">
+        <source>Enter some text to search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-video_page-header">
+        <source>YouTube Video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-cover-title">
+        <source>NewPipe</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
 <context>
     <name>CoverPage</name>
     <message>
         <source>My Cover</source>
-        <translation>Mein Cover</translation>
-    </message>
-</context>
-<context>
-    <name>FirstPage</name>
-    <message>
-        <source>Show Page 2</source>
-        <translation>Zur Seite 2</translation>
-    </message>
-    <message>
-        <source>UI Template</source>
-        <translation>UI-Vorlage</translation>
-    </message>
-    <message>
-        <source>Hello Sailors</source>
-        <translation>Hallo Matrosen</translation>
-    </message>
-</context>
-<context>
-    <name>SecondPage</name>
-    <message>
-        <source>Nested Page</source>
-        <translation>Unterseite</translation>
-    </message>
-    <message>
-        <source>Item</source>
-        <translation>Element</translation>
+        <translation type="vanished">Mein Cover</translation>
     </message>
 </context>
 </TS>

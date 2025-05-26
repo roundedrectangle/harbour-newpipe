@@ -5,7 +5,8 @@ CoverBackground {
     Label {
         id: label
         anchors.centerIn: parent
-        text: qsTr("My Cover")
+        //% "NewPipe"
+        text: qsTrId("newpipe-cover-title")
     }
 
     CoverActionList {
