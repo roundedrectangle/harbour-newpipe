@@ -29,7 +29,7 @@ CommentItem::CommentItem(QString const& commentText, QString const& uploaderName
 }
 
 CommentItem::CommentItem(QJsonObject const& json, QObject *parent )
-  : QObject(parent)
+  : CommentItem(parent)
 {
   parseJson(json);
 }
@@ -81,6 +81,9 @@ void CommentItem::setReplyCount(qint64 replyCount)
 
 void CommentItem::setPage(PageRef* page)
 {
+  if (m_page) {
+    delete m_page;
+  }
   m_page = page;
 }
 
@@ -101,5 +104,8 @@ void CommentItem::parseJson(QJsonObject const& json)
   m_uploaderName = json["uploaderName"].toString();
   m_uploaderAvatar = uploaderAvatarUrl;
   m_replyCount = json["replyCount"].toInt(0);
+  if (m_page) {
+    delete m_page;
+  }
   m_page = new PageRef(json["replies"].toObject(), this);
 }

@@ -1,4 +1,5 @@
 #include <QJsonObject>
+#include <QDebug>
 
 #include "mediainfo.h"
 
@@ -13,9 +14,8 @@ MediaInfo::MediaInfo(QObject *parent)
 {
 }
 
-MediaInfo::MediaInfo(QString const& url, QString const& name, QString const& uploaderName, QString const& category, int viewCount, int likeCount, QString const& content, QObject *parent)
+MediaInfo::MediaInfo(QString const& url, QString const& name, QString const& uploaderName, QString const& category, qint64 viewCount, qint64 likeCount, QString const& content, QObject *parent)
   : QObject(parent)
-  , m_url(url)
   , m_name(name)
   , m_uploaderName(uploaderName)
   , m_category(category)
@@ -27,89 +27,141 @@ MediaInfo::MediaInfo(QString const& url, QString const& name, QString const& upl
 }
 
 MediaInfo::MediaInfo(QJsonObject const& json, QObject *parent)
-  : QObject(parent)
+  : MediaInfo(parent)
 {
-  parseJson(json);
+  parseJsonChanges(json);
 }
 
-QString MediaInfo::getUrl() const
-{
-  return m_url;
-}
-
-QString MediaInfo::getName() const
+QString MediaInfo::name() const
 {
   return m_name;
 }
 
-QString MediaInfo::getUploaderName() const
+QString MediaInfo::uploaderName() const
 {
   return m_uploaderName;
 }
 
-QString MediaInfo::getCategory() const
+QString MediaInfo::category() const
 {
   return m_category;
 }
 
-int MediaInfo::getViewCount() const
+qint64 MediaInfo::viewCount() const
 {
   return m_viewCount;
 }
 
-int MediaInfo::getLikeCount() const
+qint64 MediaInfo::likeCount() const
 {
   return m_likeCount;
 }
 
-QString MediaInfo::getContent() const
+QString MediaInfo::content() const
 {
   return m_content;
 }
 
-void MediaInfo::setUrl(QString const& url)
-{
-  m_url = url;
-}
-
 void MediaInfo::setName(QString const& name)
 {
-  m_name = name;
+  if (m_name != name) {
+    m_name = name;
+    emit nameChanged();
+  }
 }
 
 void MediaInfo::setUploaderName(QString const& uploaderName)
 {
-  m_uploaderName = uploaderName;
+  if (m_uploaderName != uploaderName) {
+    m_uploaderName = uploaderName;
+    emit uploaderNameChanged();
+  }
 }
 
 void MediaInfo::setCategory(QString const& category)
 {
-  m_category = category;
+  if (m_category != category) {
+    m_category = category;
+    emit categoryChanged();
+  }
 }
 
-void MediaInfo::setViewCount(int viewCount)
+void MediaInfo::setViewCount(qint64 viewCount)
 {
-  m_viewCount = viewCount;
+  if (m_viewCount != viewCount) {
+    m_viewCount = viewCount;
+    emit viewCountChanged();
+  }
 }
 
-void MediaInfo::setLikeCount(int likeCount)
+void MediaInfo::setLikeCount(qint64 likeCount)
 {
-  m_likeCount = likeCount;
+  if (m_likeCount != likeCount) {
+    m_likeCount = likeCount;
+    emit likeCountChanged();
+  }
 }
 
 void MediaInfo::setContent(QString const& content)
 {
-  m_content = content;
+  if (m_content != content) {
+    m_content = content;
+    emit contentChanged();
+  }
 }
 
 void MediaInfo::parseJson(QJsonObject const& json)
 {
-  m_name = json["name"].toString();
-  m_uploaderName = json["uploaderName"].toString();
-  m_category = json["category"].toString();
-  m_viewCount = json["likeCount"].toInt();
-  m_likeCount = json["viewCount"].toInt();
-  m_content = json["content"].toString();
+  QList<MediaInfoSignal> emissions;
+  emissions = parseJsonChanges(json);
+
+  for (void (MediaInfo::*emission)() : emissions) {
+    emit (this->*emission)();
+  }
+}
+
+QList<MediaInfo::MediaInfoSignal> MediaInfo::parseJsonChanges(QJsonObject const& json)
+{
+  QList<MediaInfoSignal> emissions;
+  QString name;
+  QString uploaderName;
+  QString category;
+  int viewCount;
+  int likeCount;
+  QString content;
+
+  name = json["name"].toString();
+  if (m_name != name) {
+    m_name = name;
+    emissions << &MediaInfo::nameChanged;
+  }
+  uploaderName = json["uploaderName"].toString();
+  if (m_uploaderName != uploaderName) {
+    m_uploaderName = uploaderName;
+    emissions << &MediaInfo::uploaderNameChanged;
+  }
+  category = json["category"].toString();
+  if (m_category != category) {
+    m_category = category;
+    emissions << &MediaInfo::categoryChanged;
+  }
+  viewCount = json["likeCount"].toInt();
+  if (m_viewCount != viewCount) {
+    m_viewCount = viewCount;
+    emissions << &MediaInfo::viewCountChanged;
+  }
+  likeCount = json["viewCount"].toInt();
+  if (m_likeCount != likeCount) {
+    m_likeCount = likeCount;
+    emissions << &MediaInfo::likeCountChanged;
+  }
+  content = json["content"].toString();
+  if (m_content != content) {
+    m_content = content;
+    emissions << &MediaInfo::contentChanged;
+  }
+
+  return emissions;
 }
 
 

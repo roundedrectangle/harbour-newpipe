@@ -113,18 +113,17 @@ ListItem {
         ContextMenu {
             MenuItem {
                 //% "%n replies"
-                text: qsTrId("newpipe-comment_item-replies").arg(replyCount)
+                text: qsTrId("newpipe-comment_item-replies", replyCount)
                 onClicked: {
-                    console.log("Cliicked")
-                    extractor.getMoreComments(root.url, page);
                     pageStack.push(Qt.resolvedUrl("../pages/RepliesPage.qml"), {
                         url: root.url,
-                        uploaderAvatar: uploaderAvatar,
-                        uploaderName: uploaderName,
-                        commentText: commentText,
-                        page: page
+                        uploaderAvatar: root.uploaderAvatar,
+                        uploaderName: root.uploaderName,
+                        commentText: root.commentText,
+                        page: root.page,
                     });
                 }
+                enabled: (root.page.id) && (root.replyCount > 0)
             }
         }
     }

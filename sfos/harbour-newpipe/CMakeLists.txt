@@ -40,6 +40,7 @@ target_sources(harbour-newpipe PRIVATE
     "src/commentmodel.cpp"
     "src/commentitem.cpp"
     "src/pageref.cpp"
+    "src/lifetimecheck.cpp"
 )
 install(TARGETS harbour-newpipe
     RUNTIME DESTINATION bin

@@ -2,7 +2,9 @@
 
 #include "commentmodel.h"
 
-CommentModel::CommentModel(QObject *parent) : QAbstractListModel(parent)
+CommentModel::CommentModel(QObject *parent)
+  : QAbstractListModel(parent)
+  , m_page()
 {
   m_roles[CommentTextRole] = "commentText";
   m_roles[UploaderNameRole] = "uploaderName";
@@ -54,3 +56,10 @@ void CommentModel::replaceAll(QList<CommentItem const*> const& commentResults)
   endResetModel();
 }
 
+void CommentModel::setPage(PageRef* page)
+{
+  if (m_page) {
+    delete m_page;
+  }
+  m_page = page;
+}

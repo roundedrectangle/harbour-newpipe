@@ -29,27 +29,27 @@ PageRef::PageRef(QJsonObject const& json, QObject *parent)
   parseJson(json);
 }
 
-QString PageRef::getUrl() const
+QString PageRef::url() const
 {
   return m_url;
 }
 
-QString PageRef::getId() const
+QString PageRef::id() const
 {
   return m_id;
 }
 
-QStringList PageRef::getIds() const
+QStringList PageRef::ids() const
 {
   return m_ids;
 }
 
-QMap<QString, QString> PageRef::getCookies(QString const& key) const
+QMap<QString, QString> PageRef::cookies() const
 {
   return m_cookies;
 }
 
-QString PageRef::getBody()
+QString PageRef::body()
 {
   return m_body;
 }

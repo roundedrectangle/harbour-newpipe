@@ -7,24 +7,21 @@ Page {
     id: root
     property string name
     property string thumbnail
-    property string source
     property string url
-    property MediaInfo mediaInfo
+    property alias source: mediaInfo.content
 
-    Connections {
-        target: extractor
-        onExtracted: {
-            if (url === root.url) {
-                mediaInfo = extractor.getMediaInfo(url);
-                if (mediaInfo) {
-                    source = mediaInfo.getContent();
-                }
-            }
-        }
+    MediaInfo {
+        id: mediaInfo
+    }
+
+    Component.onCompleted: {
+        extractor.downloadExtract(mediaInfo, url);
+        extractor.getComments(comments.model, url);
     }
 
     SilicaListView {
-        model: commentModel
+        id: comments
+        model: CommentModel {}
         anchors.fill: parent
 
         VerticalScrollDecorator {}

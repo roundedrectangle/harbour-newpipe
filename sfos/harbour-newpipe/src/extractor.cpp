@@ -4,28 +4,26 @@
 #include <QDebug>
 #include <QtConcurrent/QtConcurrent>
 #include <QtGlobal>
+#include <QQmlEngine>
 
 #include "invoke.h"
 #include "searchmodel.h"
 #include "commentmodel.h"
 #include "mediainfo.h"
 #include "pageref.h"
+#include "lifetimecheck.h"
 
 #include "extractor.h"
 
 Extractor::Extractor(QObject *parent)
   : QObject(parent)
   , m_searchModel()
-  , m_commentModel()
-  , m_page(new PageRef())
 {
 }
 
-Extractor::Extractor(SearchModel* searchModel, CommentModel* commentModel, QObject *parent)
+Extractor::Extractor(SearchModel* searchModel, QObject *parent)
   : QObject(parent)
   , m_searchModel(searchModel)
-  , m_commentModel(commentModel)
-  , m_page(new PageRef())
 {
   QFuture<QString> initialise;
   m_threadPool.setExpiryTimeout(-1);
@@ -119,7 +117,7 @@ int Extractor::compareResolutions(QString const& first, QString const& second)
   return result;
 }
 
-void Extractor::downloadExtract(QString const& url)
+void Extractor::downloadExtract(MediaInfo* mediaInfo, QString const& url)
 {
   QJsonObject json;
   QJsonDocument document;
@@ -129,21 +127,21 @@ void Extractor::downloadExtract(QString const& url)
   document = QJsonDocument(json);
 
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
-  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, url]() {
-    QJsonDocument result = watcher->result();
-    //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+  LifetimeCheck* lifetimeCheck = new LifetimeCheck(mediaInfo, watcher);
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, url, mediaInfo, lifetimeCheck]() {
+    if (!lifetimeCheck->destroyed()) {
+      QJsonDocument result = watcher->result();
+      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
-    MediaInfo* deserialised = new MediaInfo(result.object(), this);
-    m_mediaInfo.insert(url, deserialised);
-
-    emit extracted(url);
+      mediaInfo->parseJson(result.object());
+    }
 
     delete watcher;
   });
   watcher->setFuture(invokeAsync("downloadExtract", &document));
 }
 
-void Extractor::getComments(QString const& url)
+void Extractor::getComments(CommentModel* commentModel, QString const& url)
 {
   QJsonObject json;
   QJsonDocument document;
@@ -154,30 +152,32 @@ void Extractor::getComments(QString const& url)
   document = QJsonDocument(json);
 
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
-  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher]() {
-    QJsonDocument result = watcher->result();
-    //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+  LifetimeCheck* lifetimeCheck = new LifetimeCheck(commentModel, watcher);
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, commentModel, lifetimeCheck]() {
+    if (!lifetimeCheck->destroyed()) {
+      QJsonDocument result = watcher->result();
+      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
-    QJsonArray items = result.object()["relatedItems"].toArray();
-    QList<CommentItem const*> comments;
-    for (QJsonValue const& item : items) {
-      CommentItem const* deserialised = new CommentItem(item.toObject(), m_commentModel);
-      comments.append(deserialised);
+      QJsonArray items = result.object()["relatedItems"].toArray();
+      QList<CommentItem const*> comments;
+      for (QJsonValue const& item : items) {
+        CommentItem const* deserialised = new CommentItem(item.toObject(), commentModel);
+        comments.append(deserialised);
+      }
+      commentModel->replaceAll(comments);
+      PageRef* page = new PageRef(result.object()["nextPage"].toObject(), commentModel);
+      commentModel->setPage(page);
     }
-    m_commentModel->replaceAll(comments);
 
     delete watcher;
   });
   watcher->setFuture(invokeAsync("getCommentsInfo", &document));
 }
 
-void Extractor::getMoreComments(QString const& url, PageRef* page)
+void Extractor::getMoreComments(CommentModel* commentModel, QString const& url, PageRef* page)
 {
   QJsonObject json;
   QJsonDocument document;
-
-  qDebug() << "URL: " << url;
-  qDebug() << "Page URL: " << page->getUrl();
 
   json["service"] = QStringLiteral("YouTube");
   json["url"] = url;
@@ -185,25 +185,23 @@ void Extractor::getMoreComments(QString const& url, PageRef* page)
   document = QJsonDocument(json);
 
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
-  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher]() {
-    QJsonDocument result = watcher->result();
-    //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+  LifetimeCheck* lifetimeCheck = new LifetimeCheck(commentModel, watcher);
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, commentModel, lifetimeCheck]() {
+    if (!lifetimeCheck->destroyed()) {
+      QJsonDocument result = watcher->result();
+      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
-    QJsonArray items = result.object()["itemsList"].toArray();
-    QList<CommentItem const*> comments;
-    for (QJsonValue const& item : items) {
-      CommentItem const* deserialised = new CommentItem(item.toObject(), m_commentModel);
-      comments.append(deserialised);
+      QJsonArray items = result.object()["itemsList"].toArray();
+      QList<CommentItem const*> comments;
+      for (QJsonValue const& item : items) {
+        CommentItem const* deserialised = new CommentItem(item.toObject(), commentModel);
+        comments.append(deserialised);
+      }
+      commentModel->replaceAll(comments);
+      PageRef* page = new PageRef(result.object()["nextPage"].toObject(), commentModel);
+      commentModel->setPage(page);
     }
-    m_commentModel->replaceAll(comments);
-    m_page->parseJson(result.object()["nextPage"].toObject());
-
     delete watcher;
   });
   watcher->setFuture(invokeAsync("getMoreCommentItems", &document));
-}
-
-MediaInfo* Extractor::getMediaInfo(QString const& url) const
-{
-  return m_mediaInfo.value(url, nullptr);
 }

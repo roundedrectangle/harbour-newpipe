@@ -17,17 +17,16 @@ class Extractor : public QObject
   Q_OBJECT
 public:
   explicit Extractor(QObject *parent = nullptr);
-  explicit Extractor(SearchModel* searchModel, CommentModel* commentModel, QObject *parent = nullptr);
+  explicit Extractor(SearchModel* searchModel, QObject *parent = nullptr);
   ~Extractor();
 
   static int compareResolutions(QString const& first, QString const& second);
 
 public slots:
   void search(QString const& searchTerm);
-  void downloadExtract(QString const& url);
-  void getComments(QString const& url);
-  void getMoreComments(QString const& url, PageRef* page);
-  MediaInfo* getMediaInfo(QString const& url) const;
+  void downloadExtract(MediaInfo* mediaInfo, QString const& url);
+  void getComments(CommentModel* commentModel, QString const& url);
+  void getMoreComments(CommentModel* commentModel, QString const& url, PageRef* page);
 
 signals:
   void extracted(QString const& url);
@@ -42,9 +41,6 @@ public:
   graal_isolatethread_t* m_thread;
   QThreadPool m_threadPool;
   SearchModel* m_searchModel;
-  CommentModel* m_commentModel;
-  QMap<QString, MediaInfo*> m_mediaInfo;
-  PageRef* m_page;
 };
 
 #endif // EXTRACTOR_H

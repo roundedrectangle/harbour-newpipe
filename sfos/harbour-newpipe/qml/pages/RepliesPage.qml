@@ -4,7 +4,7 @@ import harbour.newpipe.extractor 1.0
 import "../components"
 
 Page {
-    id: page
+    id: root
     property string url
     property string uploaderAvatar
     property string uploaderName
@@ -12,20 +12,13 @@ Page {
     property int replyCount
     property PageRef page
 
-//    Connections {
-//        target: extractor
-//        onExtracted: {
-//            if (url === page.url) {
-//                mediaInfo = extractor.getMediaInfo(url);
-//                if (mediaInfo) {
-//                    source = mediaInfo.getContent();
-//                }
-//            }
-//        }
-//    }
+    Component.onCompleted: {
+        extractor.getMoreComments(comments.model, url, page);
+    }
 
     SilicaListView {
-        model: commentModel
+        id: comments
+        model: CommentModel {}
         anchors.fill: parent
 
         VerticalScrollDecorator {}
@@ -43,7 +36,7 @@ Page {
         }
 
         delegate: CommentItem {
-            url: url
+            url: root.url
             uploaderAvatar: model.uploaderAvatar
             uploaderName: model.uploaderName
             commentText: model.commentText

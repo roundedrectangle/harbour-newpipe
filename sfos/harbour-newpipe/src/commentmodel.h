@@ -27,9 +27,12 @@ public:
 
   void replaceAll(QList<CommentItem const*> const& commentResults);
 
+  void setPage(PageRef* page);
+
 private:
   QHash<int, QByteArray> m_roles;
   QList<CommentItem const*> m_commentResults;
+  PageRef* m_page;
 };
 
 #endif // COMMENTMODEL_H
