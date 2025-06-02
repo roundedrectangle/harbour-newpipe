@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(harbour-newpipe CXX)
 
-find_package (Qt5 COMPONENTS Core Network Qml Gui Quick REQUIRED)
+find_package(Qt5 COMPONENTS Core Network Qml Gui Quick LinguistTools REQUIRED)
 
 include(FindPkgConfig)
 pkg_search_module(SAILFISH sailfishapp REQUIRED)
@@ -42,6 +42,19 @@ target_sources(harbour-newpipe PRIVATE
     "src/pageref.cpp"
     "src/lifetimecheck.cpp"
 )
+
+# Update the translations
+# See https://doc.qt.io/archives/qt-5.15/cmake-manual.html
+# See https://doc.qt.io/archives/qt-5.15/qtlinguist-cmake-qt5-create-translation.html
+FILE(GLOB TsFiles "translations/*.ts")
+qt5_create_translation(TRANSLATION_QM_FILES
+    "qml/"
+    "src/"
+    ${TsFiles})
+
+add_custom_target(translations ALL DEPENDS ${TRANSLATION_QM_FILES})
+add_dependencies(harbour-newpipe translations)
+
 install(TARGETS harbour-newpipe
     RUNTIME DESTINATION bin
 )
@@ -76,7 +89,6 @@ install(DIRECTORY qml/images/
 )
 
 # Get the other files reachable from the project tree in Qt Creator
-FILE(GLOB TsFiles "translations/*.ts")
 FILE(GLOB ImageFiles "qml/images/*/*.png")
 add_custom_target(distfiles
     SOURCES
