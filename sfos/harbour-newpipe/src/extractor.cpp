@@ -166,7 +166,7 @@ void Extractor::getComments(CommentModel* commentModel, QString const& url)
       }
       commentModel->replaceAll(comments);
       PageRef* page = new PageRef(result.object()["nextPage"].toObject(), commentModel);
-      commentModel->setPage(page);
+      commentModel->setNextPage(page);
     }
 
     delete watcher;
@@ -199,7 +199,39 @@ void Extractor::getMoreComments(CommentModel* commentModel, QString const& url, 
       }
       commentModel->replaceAll(comments);
       PageRef* page = new PageRef(result.object()["nextPage"].toObject(), commentModel);
-      commentModel->setPage(page);
+      commentModel->setNextPage(page);
+    }
+    delete watcher;
+  });
+  watcher->setFuture(invokeAsync("getMoreCommentItems", &document));
+}
+
+void Extractor::appendMoreComments(CommentModel* commentModel, QString const& url, PageRef* page)
+{
+  QJsonObject json;
+  QJsonDocument document;
+
+  json["service"] = QStringLiteral("YouTube");
+  json["url"] = url;
+  json["page"] = page->toJson();
+  document = QJsonDocument(json);
+
+  QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
+  LifetimeCheck* lifetimeCheck = new LifetimeCheck(commentModel, watcher);
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, commentModel, lifetimeCheck]() {
+    if (!lifetimeCheck->destroyed()) {
+      QJsonDocument result = watcher->result();
+      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+
+      QJsonArray items = result.object()["itemsList"].toArray();
+      QList<CommentItem const*> comments;
+      for (QJsonValue const& item : items) {
+        CommentItem const* deserialised = new CommentItem(item.toObject(), commentModel);
+        comments.append(deserialised);
+      }
+      commentModel->append(comments);
+      PageRef* page = new PageRef(result.object()["nextPage"].toObject(), commentModel);
+      commentModel->setNextPage(page);
     }
     delete watcher;
   });

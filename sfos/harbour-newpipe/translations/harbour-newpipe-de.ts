@@ -34,6 +34,18 @@
         <source>NewPipe</source>
         <translation type="unfinished"></translation>
     </message>
+    <message id="newpipe-proglist_load-more">
+        <source>Load more...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-repliespage_load-more">
+        <source>Load more...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-videopage_load-more">
+        <source>Load more...</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>

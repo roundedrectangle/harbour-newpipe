@@ -16,7 +16,7 @@ Page {
 
     Component.onCompleted: {
         extractor.downloadExtract(mediaInfo, url);
-        extractor.getComments(comments.model, url);
+        comments.model.loadComments(extractor, url);
     }
 
     SilicaListView {
@@ -25,6 +25,19 @@ Page {
         anchors.fill: parent
 
         VerticalScrollDecorator {}
+
+        PushUpMenu {
+            MenuItem {
+                //% "Load more..."
+                text: qsTrId("newpipe-videopage_load-more")
+                onDelayedClick: {
+                    comments.model.loadComments(extractor, url);
+                }
+                enabled: comments.model.more
+            }
+            enabled: !comments.model.loading
+            busy: comments.model.loading
+        }
 
         header: Column {
             id: column

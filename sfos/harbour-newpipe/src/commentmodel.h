@@ -5,8 +5,14 @@
 
 #include "commentitem.h"
 
+class Extractor;
+
 class CommentModel : public QAbstractListModel
 {
+  Q_PROPERTY(PageRef* nextPage READ nextPage WRITE setNextPage NOTIFY nextPageChanged)
+  Q_PROPERTY(bool loading READ loading WRITE setLoading NOTIFY loadingChanged)
+  Q_PROPERTY(bool more READ more WRITE setMore NOTIFY moreChanged)
+
   Q_OBJECT
 public:
   enum CommentRoles {
@@ -27,12 +33,31 @@ public:
 
   void replaceAll(QList<CommentItem const*> const& commentResults);
 
-  void setPage(PageRef* page);
+  void append(QList<CommentItem const*> const& commentResults);
+
+public slots:
+  void loadComments(Extractor* extractor, QString const& url);
+
+  PageRef* nextPage() const;
+  void setNextPage(PageRef* nextPage);
+
+  bool loading() const;
+  void setLoading(bool loading);
+
+  bool more() const;
+  void setMore(bool more);
+
+signals:
+  void nextPageChanged();
+  void loadingChanged();
+  void moreChanged();
 
 private:
   QHash<int, QByteArray> m_roles;
   QList<CommentItem const*> m_commentResults;
-  PageRef* m_page;
+  PageRef* m_nextPage;
+  bool m_loading;
+  bool m_more;
 };
 
 #endif // COMMENTMODEL_H

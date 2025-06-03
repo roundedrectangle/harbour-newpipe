@@ -13,15 +13,30 @@ Page {
     property PageRef page
 
     Component.onCompleted: {
-        extractor.getMoreComments(comments.model, url, page);
+        comments.model.loadComments(extractor, url);
     }
 
     SilicaListView {
         id: comments
-        model: CommentModel {}
+        model: CommentModel {
+            nextPage: root.page
+        }
         anchors.fill: parent
 
         VerticalScrollDecorator {}
+
+        PushUpMenu {
+            MenuItem {
+                //% "Load more..."
+                text: qsTrId("newpipe-repliespage_load-more")
+                onDelayedClick: {
+                    comments.model.loadComments(extractor, url);
+                }
+                enabled: comments.model.more
+            }
+            enabled: !comments.model.loading
+            busy: comments.model.loading
+        }
 
         header: Column {
             id: column

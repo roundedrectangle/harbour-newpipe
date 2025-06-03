@@ -27,6 +27,7 @@ public slots:
   void downloadExtract(MediaInfo* mediaInfo, QString const& url);
   void getComments(CommentModel* commentModel, QString const& url);
   void getMoreComments(CommentModel* commentModel, QString const& url, PageRef* page);
+  void appendMoreComments(CommentModel* commentModel, QString const& url, PageRef* page);
 
 signals:
   void extracted(QString const& url);

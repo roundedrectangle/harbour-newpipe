@@ -41,6 +41,14 @@ Page {
 
         VerticalScrollDecorator {}
 
+        PushUpMenu {
+            MenuItem {
+                //% "Load more..."
+                text: qsTrId("newpipe-proglist_load-more")
+                onClicked: console.log("Load more")
+            }
+        }
+
         header: Column {
             id: headerColumn
             width: page.width
