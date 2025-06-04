@@ -11,43 +11,28 @@
             <numerusform>%n replies</numerusform>
         </translation>
     </message>
-    <message id="newpipe-repliespage_load-more">
-        <location filename="../qml/pages/RepliesPage.qml" line="31"/>
-        <source>Load more...</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message id="newpipe-replies_page-header">
-        <location filename="../qml/pages/RepliesPage.qml" line="49"/>
+        <location filename="../qml/pages/RepliesPage.qml" line="43"/>
         <source>Replies</source>
         <translation type="unfinished">Replies</translation>
     </message>
-    <message id="newpipe-proglist_load-more">
-        <location filename="../qml/pages/SearchPage.qml" line="47"/>
-        <source>Load more...</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message id="newpipe-proglist_search-placeholder">
-        <location filename="../qml/pages/SearchPage.qml" line="66"/>
+        <location filename="../qml/pages/SearchPage.qml" line="65"/>
         <source>Search</source>
         <translation type="unfinished">Search</translation>
     </message>
     <message id="newpipe-proglist_search-no-entries">
-        <location filename="../qml/pages/SearchPage.qml" line="85"/>
+        <location filename="../qml/pages/SearchPage.qml" line="84"/>
         <source>No entries</source>
         <translation type="unfinished">No entries</translation>
     </message>
     <message id="newpipe-proglist_search-enter-some-text">
-        <location filename="../qml/pages/SearchPage.qml" line="87"/>
+        <location filename="../qml/pages/SearchPage.qml" line="86"/>
         <source>Enter some text to search</source>
         <translation type="unfinished">Enter some text to search</translation>
     </message>
-    <message id="newpipe-videopage_load-more">
-        <location filename="../qml/pages/VideoPage.qml" line="32"/>
-        <source>Load more...</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message id="newpipe-video_page-header">
-        <location filename="../qml/pages/VideoPage.qml" line="50"/>
+        <location filename="../qml/pages/VideoPage.qml" line="44"/>
         <source>YouTube Video</source>
         <translation type="unfinished">YouTube Video</translation>
     </message>
