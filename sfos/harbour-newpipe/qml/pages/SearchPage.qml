@@ -41,12 +41,11 @@ Page {
 
         VerticalScrollDecorator {}
 
-        PushUpMenu {
-            MenuItem {
-                //% "Load more..."
-                text: qsTrId("newpipe-proglist_load-more")
-                onClicked: console.log("Load more")
-            }
+        onContentYChanged: {
+            var pos = contentHeight + originY - height - contentY;
+            //if ((pos < height) && !comments.model.loading && comments.model.more && comments.model.nextPage) {
+            //    comments.model.loadComments(extractor, url);
+            //}
         }
 
         header: Column {

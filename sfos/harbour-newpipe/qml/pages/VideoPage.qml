@@ -26,17 +26,11 @@ Page {
 
         VerticalScrollDecorator {}
 
-        PushUpMenu {
-            MenuItem {
-                //% "Load more..."
-                text: qsTrId("newpipe-videopage_load-more")
-                onDelayedClick: {
-                    comments.model.loadComments(extractor, url);
-                }
-                enabled: comments.model.more
+        onContentYChanged: {
+            var pos = contentHeight + originY - height - contentY;
+            if ((pos < height) && !comments.model.loading && comments.model.more && comments.model.nextPage) {
+                comments.model.loadComments(extractor, url);
             }
-            enabled: !comments.model.loading
-            busy: comments.model.loading
         }
 
         header: Column {
@@ -56,6 +50,12 @@ Page {
                 height: width * (9 / 16)
                 source: root.source
                 thumbnail: root.thumbnail
+
+                onControllableChanged: {
+                    if (controllable) {
+                        root.sequence = true
+                    }
+                }
             }
 
             Label {

@@ -25,17 +25,11 @@ Page {
 
         VerticalScrollDecorator {}
 
-        PushUpMenu {
-            MenuItem {
-                //% "Load more..."
-                text: qsTrId("newpipe-repliespage_load-more")
-                onDelayedClick: {
-                    comments.model.loadComments(extractor, url);
-                }
-                enabled: comments.model.more
+        onContentYChanged: {
+            var pos = contentHeight + originY - height - contentY;
+            if ((pos < height) && !comments.model.loading && comments.model.more && comments.model.nextPage) {
+                comments.model.loadComments(extractor, url);
             }
-            enabled: !comments.model.loading
-            busy: comments.model.loading
         }
 
         header: Column {
