@@ -8,11 +8,8 @@ Page {
     property string name
     property string thumbnail
     property string url
+    property MediaInfo mediaInfo: MediaInfo { id: mediaInfo }
     property alias source: mediaInfo.content
-
-    MediaInfo {
-        id: mediaInfo
-    }
 
     Component.onCompleted: {
         extractor.downloadExtract(mediaInfo, url);
@@ -50,22 +47,19 @@ Page {
                 height: width * (9 / 16)
                 source: root.source
                 thumbnail: root.thumbnail
-
-                onControllableChanged: {
-                    if (controllable) {
-                        root.sequence = true
-                    }
-                }
             }
 
             Label {
                 id: videoTitle
                 x: Theme.paddingLarge
                 width: parent.width - (2 * Theme.paddingLarge)
-                height: Theme.itemSizeMedium
                 color: Theme.highlightColor
                 wrapMode: Text.Wrap
                 text: root.name
+            }
+
+            MediaDetails {
+                mediaInfo: root.mediaInfo
             }
         }
 

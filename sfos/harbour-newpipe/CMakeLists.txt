@@ -103,6 +103,9 @@ add_custom_target(distfiles
         qml/components/VideoPlayer.qml
         qml/components/IconButtonDual.qml
         qml/components/CommentItem.qml
+        qml/components/MediaDetails.qml
+        qml/components/KeyValue.qml
+        qml/components/StatItem.qml
         qml/icons/
         rpm/harbour-newpipe.changes.in
         rpm/harbour-newpipe.changes.run.in

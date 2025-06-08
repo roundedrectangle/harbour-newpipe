@@ -34,5 +34,17 @@
         <source>NewPipe</source>
         <translation type="unfinished"></translation>
     </message>
+    <message id="newpipe-media_details-detail_uploader">
+        <source>Uploader</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-media_details-detail_category">
+        <source>Category</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-media_details-detail_description">
+        <source>Description</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>
