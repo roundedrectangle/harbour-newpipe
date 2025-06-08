@@ -24,6 +24,7 @@ public:
 
 public slots:
   void search(QString const& searchTerm);
+  void searchMore(QString const& searchTerm, PageRef* page);
   void downloadExtract(MediaInfo* mediaInfo, QString const& url);
   void getComments(CommentModel* commentModel, QString const& url);
   void getMoreComments(CommentModel* commentModel, QString const& url, PageRef* page);

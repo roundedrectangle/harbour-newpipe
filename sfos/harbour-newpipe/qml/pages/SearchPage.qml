@@ -21,7 +21,7 @@ Page {
         interval: 500
         repeat: false
         onTriggered: {
-            extractor.search(searchString);
+            searchModel.search(extractor, searchString);
         }
     }
 
@@ -43,9 +43,9 @@ Page {
 
         onContentYChanged: {
             var pos = contentHeight + originY - height - contentY;
-            //if ((pos < height) && !comments.model.loading && comments.model.more && comments.model.nextPage) {
-            //    comments.model.loadComments(extractor, url);
-            //}
+            if ((pos < height) && !searchModel.loading && searchModel.more && searchModel.nextPage) {
+                searchModel.searchMore(extractor, searchString);
+            }
         }
 
         header: Column {

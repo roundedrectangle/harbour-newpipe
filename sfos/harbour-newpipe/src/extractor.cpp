@@ -97,10 +97,46 @@ void Extractor::search(QString const& searchTerm)
       searchResults.append(deserialised);
     }
     m_searchModel->replaceAll(searchResults);
+    PageRef* page = new PageRef(result.object()["nextPage"].toObject(), m_searchModel);
+    m_searchModel->setNextPage(page);
 
     delete watcher;
   });
   watcher->setFuture(invokeAsync("searchFor", &document));
+}
+
+void Extractor::searchMore(QString const& searchTerm, PageRef* page)
+{
+  QJsonObject json;
+  QJsonArray contentFilter;
+  QJsonDocument document;
+
+  json["service"] = QStringLiteral("YouTube");
+  json["searchString"] = searchTerm;
+  contentFilter.push_back(QStringLiteral("all"));
+  json["contentFilter"] = contentFilter;
+  json["sortFilter"] = QStringLiteral("");
+  json["page"] = page->toJson();
+  document = QJsonDocument(json);
+
+  QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher]() {
+    QJsonDocument result = watcher->result();
+    //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+
+    QJsonArray items = result.object()["itemsList"].toArray();
+    QList<SearchItem const*> searchResults;
+    for (QJsonValue const& item : items) {
+      SearchItem const* deserialised = new SearchItem(item.toObject(), m_searchModel);
+      searchResults.append(deserialised);
+    }
+    m_searchModel->append(searchResults);
+    PageRef* page = new PageRef(result.object()["nextPage"].toObject(), m_searchModel);
+    m_searchModel->setNextPage(page);
+
+    delete watcher;
+  });
+  watcher->setFuture(invokeAsync("getMoreSearchItems", &document));
 }
 
 int Extractor::compareResolutions(QString const& first, QString const& second)
