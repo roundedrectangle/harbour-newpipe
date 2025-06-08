@@ -145,12 +145,12 @@ QList<MediaInfo::MediaInfoSignal> MediaInfo::parseJsonChanges(QJsonObject const&
     m_category = category;
     emissions << &MediaInfo::categoryChanged;
   }
-  viewCount = json["likeCount"].toInt();
+  viewCount = json["viewCount"].toInt();
   if (m_viewCount != viewCount) {
     m_viewCount = viewCount;
     emissions << &MediaInfo::viewCountChanged;
   }
-  likeCount = json["viewCount"].toInt();
+  likeCount = json["likeCount"].toInt();
   if (m_likeCount != likeCount) {
     m_likeCount = likeCount;
     emissions << &MediaInfo::likeCountChanged;
