@@ -1,5 +1,7 @@
 #include <sailfishapp.h>
 
+#include <QTextStream>
+
 #include "utils.h"
 
 Utils* Utils::m_instance = nullptr;
@@ -34,5 +36,22 @@ QString Utils::millisecondsToTime(quint32 milliseconds)
     int seconds = (remaining % 60);
 
     return QString("%1:%2:%3").arg(hours).arg(minutes, 2, 'f', 0, '0').arg(seconds, 2, 'f', 0, '0');
+}
+
+QString Utils::lengthToTimeString(quint64 length)
+{
+  quint64 remaining = length;
+  int hours = remaining / 3600;
+  int minutes = (remaining / 60) % 60;
+  int seconds = (remaining % 60);
+
+  return QString("%1:%2:%3").arg(hours).arg(minutes, 2, 'f', 0, '0').arg(seconds, 2, 'f', 0, '0');
+}
+
+QDateTime Utils::epochToDateTime(qint64 epoch)
+{
+  QDateTime dateTIme = QDateTime::fromMSecsSinceEpoch(epoch * 1000);
+
+  return dateTIme;
 }
 

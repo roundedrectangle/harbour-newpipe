@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <QDateTime>
 #include <QObject>
 
 class QQmlEngine;
@@ -15,6 +16,8 @@ public:
   static Utils& getInstance();
   static QObject* provider(QQmlEngine* engine, QJSEngine* scriptEngine);
   Q_INVOKABLE static QString millisecondsToTime(quint32 milliseconds);
+  Q_INVOKABLE static QString lengthToTimeString(quint64 length);
+  Q_INVOKABLE static QDateTime epochToDateTime(qint64 epoch);
 
 private:
   static Utils* m_instance;

@@ -65,15 +65,33 @@ SilicaControl {
             }
 
             KeyValue {
+                //% "Upload date"
+                key: qsTrId("newpipe-media_details-detail_date")
+                value: Format.formatDate(mediaInfo.uploadDate, Format.DateLong)
+            }
+
+            KeyValue {
+                //% "Length"
+                key: qsTrId("newpipe-media_details-detail_length")
+                value: Utils.lengthToTimeString(mediaInfo.length)
+            }
+
+            KeyValue {
                 //% "Category"
                 key: qsTrId("newpipe-media_details-detail_category")
                 value: mediaInfo.category
             }
 
             KeyValue {
+                //% "Licence"
+                key: qsTrId("newpipe-media_details-detail_licence")
+                value: mediaInfo.licence
+            }
+
+            KeyValue {
                 //% "Description"
                 key: qsTrId("newpipe-media_details-detail_description")
-                value: "None"
+                value: mediaInfo.description
             }
         }
     }

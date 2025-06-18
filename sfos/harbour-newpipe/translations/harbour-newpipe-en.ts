@@ -46,13 +46,28 @@
         <source>Uploader</source>
         <translation type="unfinished"></translation>
     </message>
-    <message id="newpipe-media_details-detail_category">
+    <message id="newpipe-media_details-detail_date">
         <location filename="../qml/components/MediaDetails.qml" line="69"/>
+        <source>Upload date</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-media_details-detail_length">
+        <location filename="../qml/components/MediaDetails.qml" line="75"/>
+        <source>Length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-media_details-detail_category">
+        <location filename="../qml/components/MediaDetails.qml" line="81"/>
         <source>Category</source>
         <translation type="unfinished"></translation>
     </message>
+    <message id="newpipe-media_details-detail_licence">
+        <location filename="../qml/components/MediaDetails.qml" line="87"/>
+        <source>Licence</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message id="newpipe-media_details-detail_description">
-        <location filename="../qml/components/MediaDetails.qml" line="75"/>
+        <location filename="../qml/components/MediaDetails.qml" line="93"/>
         <source>Description</source>
         <translation type="unfinished"></translation>
     </message>

@@ -46,5 +46,17 @@
         <source>Description</source>
         <translation type="unfinished"></translation>
     </message>
+    <message id="newpipe-media_details-detail_date">
+        <source>Upload date</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-media_details-detail_length">
+        <source>Length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-media_details-detail_licence">
+        <source>Licence</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

@@ -1,6 +1,8 @@
 #include <QJsonObject>
 #include <QDebug>
 
+#include "utils.h"
+
 #include "mediainfo.h"
 
 MediaInfo::MediaInfo(QObject *parent)
@@ -14,7 +16,7 @@ MediaInfo::MediaInfo(QObject *parent)
 {
 }
 
-MediaInfo::MediaInfo(QString const& url, QString const& name, QString const& uploaderName, QString const& category, qint64 viewCount, qint64 likeCount, QString const& content, QObject *parent)
+MediaInfo::MediaInfo(QString const& url, QString const& name, QString const& uploaderName, QString const& category, qint64 viewCount, qint64 likeCount, QString const& content, QDateTime const& uploadDate, QString description, DescType descriptionType, quint64 length, QString licence, QObject *parent)
   : QObject(parent)
   , m_name(name)
   , m_uploaderName(uploaderName)
@@ -22,6 +24,11 @@ MediaInfo::MediaInfo(QString const& url, QString const& name, QString const& upl
   , m_viewCount(viewCount)
   , m_likeCount(likeCount)
   , m_content(content)
+  , m_uploadDate(uploadDate)
+  , m_description(description)
+  , m_descriptionType(descriptionType)
+  , m_length(length)
+  , m_licence(licence)
 {
 
 }
@@ -60,6 +67,31 @@ qint64 MediaInfo::likeCount() const
 QString MediaInfo::content() const
 {
   return m_content;
+}
+
+QDateTime MediaInfo::uploadDate() const
+{
+  return m_uploadDate;
+}
+
+QString MediaInfo::description() const
+{
+  return m_description;
+}
+
+MediaInfo::DescType MediaInfo::descriptionType() const
+{
+  return m_descriptionType;
+}
+
+quint64 MediaInfo::length() const
+{
+  return m_length;
+}
+
+QString MediaInfo::licence() const
+{
+  return m_licence;
 }
 
 void MediaInfo::setName(QString const& name)
@@ -110,6 +142,46 @@ void MediaInfo::setContent(QString const& content)
   }
 }
 
+void MediaInfo::setUploadDate(QDateTime const& uploadDate)
+{
+  if (m_uploadDate != uploadDate) {
+    m_uploadDate = uploadDate;
+    emit uploadDateChanged();
+  }
+}
+
+void MediaInfo::setDescription(QString const& description)
+{
+  if (m_description != description) {
+    m_description = description;
+    emit descriptionChanged();
+  }
+}
+
+void MediaInfo::setDescriptionType(DescType descriptionType)
+{
+  if (m_descriptionType != descriptionType) {
+    m_descriptionType = descriptionType;
+    emit descriptionTypeChanged();
+  }
+}
+
+void MediaInfo::setLength(quint64 length)
+{
+  if (m_length != length) {
+    m_length = length;
+    emit lengthChanged();
+  }
+}
+
+void MediaInfo::setLicence(QString const& licence)
+{
+  if (m_licence != licence) {
+    m_licence = licence;
+    emit licenceChanged();
+  }
+}
+
 void MediaInfo::parseJson(QJsonObject const& json)
 {
   QList<MediaInfoSignal> emissions;
@@ -129,6 +201,11 @@ QList<MediaInfo::MediaInfoSignal> MediaInfo::parseJsonChanges(QJsonObject const&
   int viewCount;
   int likeCount;
   QString content;
+  QDateTime uploadDate;
+  QString description;
+  DescType descriptionType;
+  quint64 length;
+  QString licence;
 
   name = json["name"].toString();
   if (m_name != name) {
@@ -159,6 +236,31 @@ QList<MediaInfo::MediaInfoSignal> MediaInfo::parseJsonChanges(QJsonObject const&
   if (m_content != content) {
     m_content = content;
     emissions << &MediaInfo::contentChanged;
+  }
+  uploadDate = Utils::epochToDateTime(json["uploadDate"].toInt());
+  if (m_uploadDate != uploadDate) {
+    m_uploadDate = uploadDate;
+    emissions << &MediaInfo::uploadDateChanged;
+  }
+  description = json["description"].toObject()["content"].toString();
+  if (m_description != description) {
+    m_description = description;
+    emissions << &MediaInfo::descriptionChanged;
+  }
+  descriptionType = static_cast<DescType>(json["description"].toObject()["type"].toInt());
+  if (m_descriptionType != descriptionType) {
+    m_descriptionType = descriptionType;
+    emissions << &MediaInfo::descriptionTypeChanged;
+  }
+  length = json["length"].toInt();
+  if (m_length != length) {
+    m_length = length;
+    emissions << &MediaInfo::lengthChanged;
+  }
+  licence = json["licence"].toString();
+  if (m_licence != licence) {
+    m_licence = licence;
+    emissions << &MediaInfo::licenceChanged;
   }
 
   return emissions;
