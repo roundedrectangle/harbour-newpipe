@@ -5,7 +5,7 @@ import Sailfish.TextLinking 1.0
 LinkedText {
     property string key
     property string value
-    property color keyColor: highlighted ? Theme.secondaryHighlightColor :  Theme.secondaryColor
+    property color keyColor: highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
 
     width: parent.width
     color: highlighted ? Theme.highlightColor : Theme.primaryColor
