@@ -34,6 +34,7 @@ target_sources(harbour-newpipe PRIVATE
     "src/invoke.cpp"
     "src/searchmodel.cpp"
     "src/searchitem.cpp"
+    "src/searchitemstream.cpp"
     "src/mediainfo.cpp"
     "src/utils.cpp"
     "src/imageprovider.cpp"

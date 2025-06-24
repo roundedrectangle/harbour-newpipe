@@ -93,7 +93,7 @@ void Extractor::search(QString const& searchTerm)
     QJsonArray items = result.object()["relatedItems"].toArray();
     QList<SearchItem const*> searchResults;
     for (QJsonValue const& item : items) {
-      SearchItem const* deserialised = new SearchItem(item.toObject(), m_searchModel);
+      SearchItem const* deserialised = SearchItem::createSearchItem(item.toObject(), m_searchModel);
       searchResults.append(deserialised);
     }
     m_searchModel->replaceAll(searchResults);
@@ -127,7 +127,7 @@ void Extractor::searchMore(QString const& searchTerm, PageRef* page)
     QJsonArray items = result.object()["itemsList"].toArray();
     QList<SearchItem const*> searchResults;
     for (QJsonValue const& item : items) {
-      SearchItem const* deserialised = new SearchItem(item.toObject(), m_searchModel);
+      SearchItem const* deserialised = SearchItem::createSearchItem(item.toObject(), m_searchModel);
       searchResults.append(deserialised);
     }
     m_searchModel->append(searchResults);
