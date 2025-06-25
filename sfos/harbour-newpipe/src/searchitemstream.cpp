@@ -1,5 +1,5 @@
 #include <QJsonObject>
-#include <QJsonArray>
+#include <QDateTime>
 
 #include "searchitemstream.h"
 
@@ -23,7 +23,7 @@ QString SearchItemStream::uploaderName() const
   return m_uploaderName;
 }
 
-quint64 SearchItemStream::uploadDate()
+quint64 SearchItemStream::uploadDate() const
 {
   return m_uploadDate;
 }
@@ -44,4 +44,11 @@ void SearchItemStream::parseJson(QJsonObject const& json)
 
   m_uploaderName = json["uploaderName"].toString();
   m_uploadDate = json["uploadDate"].toObject()["offsetDateTime"].toInt(0);
+}
+
+QString SearchItemStream::getInfoRow() const
+{
+  QDateTime dateTIme = QDateTime::fromMSecsSinceEpoch(m_uploadDate);
+
+  return QString("%1:%2:%3").arg(hours).arg(minutes, 2, 'f', 0, '0').arg(seconds, 2, 'f', 0, '0');
 }

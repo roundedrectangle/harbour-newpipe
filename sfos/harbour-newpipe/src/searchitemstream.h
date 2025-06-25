@@ -12,7 +12,8 @@ public:
   explicit SearchItemStream(QJsonObject const& json, QObject *parent = nullptr);
 
   QString uploaderName() const;
-  quint64 uploadDate();
+  quint64 uploadDate() const;
+  virtual QString getInfoRow() const override;
 
   void setUploaderName(QString const& uploaderName);
   void setUploadDate(quint64 uploadDate);

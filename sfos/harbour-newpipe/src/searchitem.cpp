@@ -3,6 +3,9 @@
 
 #include "extractor.h"
 #include "searchitemstream.h"
+#include "searchitemplaylist.h"
+#include "searchitemchannel.h"
+#include "searchitemcomment.h"
 
 #include "searchitem.h"
 
@@ -103,11 +106,23 @@ SearchItem* SearchItem::createSearchItem(QJsonObject const& json, QObject *paren
       result = new SearchItemStream(json, parent);
       break;
     case Playlist:
+      result = new SearchItemPlaylist(json, parent);
+      break;
     case Channel:
+      result = new SearchItemChannel(json, parent);
+      break;
+    case Comment:
+      result = new SearchItemComment(json, parent);
+      break;
     default:
       result = new SearchItem(json, parent);
       break;
   }
 
   return result;
+}
+
+QString SearchItem::getInfoRow() const
+{
+  return QString();
 }
