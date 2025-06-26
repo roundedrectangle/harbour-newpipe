@@ -71,5 +71,10 @@
         <source>Description</source>
         <translation type="unfinished"></translation>
     </message>
+    <message id="newpipe-searchitem-stream_inforow">
+        <location filename="../src/searchitemstream.cpp" line="66"/>
+        <source>%0 • %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

@@ -58,5 +58,9 @@
         <source>Licence</source>
         <translation type="unfinished"></translation>
     </message>
+    <message id="newpipe-searchitem-stream_inforow">
+        <source>%0 • %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

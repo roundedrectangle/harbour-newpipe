@@ -117,14 +117,28 @@ Page {
                     source: model.thumbnail
                 }
 
-                Label {
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: Theme.primaryColor
-                    textFormat: Text.StyledText
-                    text: model.name
+                Column {
                     width: parent.width - thumbnail.width - Theme.paddingLarge
-                    elide: Text.ElideRight
-                    focus: false
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Label {
+                        color: delegate.pressed ? Theme.highlightColor : Theme.primaryColor
+                        textFormat: Text.PlainText
+                        text: model.name
+                        width: parent.width
+                        truncationMode: TruncationMode.Fade
+                        focus: false
+                    }
+
+                    Label {
+                        color: delegate.pressed ? Theme.secondaryHighlightColor : Theme.secondaryColor
+                        textFormat: Text.PlainText
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        text: model.infoRow || ""
+                        truncationMode: TruncationMode.Fade
+                        focus: false
+                        visible: !!model.infoRow
+                    }
                 }
             }
 

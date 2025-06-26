@@ -20,6 +20,8 @@ public:
     NameRole = Qt::UserRole + 1,
     ThumbnailRole,
     UrlRole,
+    InfoTypeRole,
+    InfoRowRole,
   };
 
   explicit SearchModel(QObject *parent = nullptr);

@@ -1,6 +1,11 @@
 #include "extractor.h"
 #include "pageref.h"
 
+#include "searchitemstream.h"
+#include "searchitemchannel.h"
+#include "searchitemplaylist.h"
+#include "searchitemcomment.h"
+
 #include "searchmodel.h"
 
 SearchModel::SearchModel(QObject *parent)
@@ -12,6 +17,7 @@ SearchModel::SearchModel(QObject *parent)
   m_roles[NameRole] = "name";
   m_roles[ThumbnailRole] = "thumbnail";
   m_roles[UrlRole] = "url";
+  m_roles[InfoRowRole] = "infoRow";
 }
 
 QHash<int, QByteArray> SearchModel::roleNames() const
@@ -31,12 +37,23 @@ QVariant SearchModel::data(const QModelIndex & index, int role) const
 
   if ((index.row() >= 0) && (index.row() < m_searchResults.count())) {
     SearchItem const* searchResult = m_searchResults[index.row()];
-    if (role == NameRole)
-      result = searchResult->getName();
-    else if (role == ThumbnailRole)
-      result = searchResult->getThumbnail();
-    else if (role == UrlRole)
-      result = searchResult->getUrl();
+    switch (role) {
+      case NameRole:
+        result = searchResult->getName();
+        break;
+      case ThumbnailRole:
+        result = searchResult->getThumbnail();
+        break;
+      case UrlRole:
+        result = searchResult->getUrl();
+        break;
+      case InfoTypeRole:
+        result = searchResult->getInfoType();
+        break;
+      case InfoRowRole:
+        result = searchResult->getInfoRow();
+        break;
+    }
   }
 
   return result;
