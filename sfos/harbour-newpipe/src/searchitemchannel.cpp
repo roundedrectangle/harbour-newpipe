@@ -65,5 +65,18 @@ void SearchItemChannel::parseJson(QJsonObject const& json)
   m_description = json["description"].toString();
   m_subscriberCount = json["subscriberCount"].toInt(0);
   m_streamCount = json["streamCount"].toInt(0);
-  m_verified = json["streamCount"].toBool(false);
+  m_verified = json["verified"].toBool(false);
+}
+
+QString SearchItemChannel::getInfoRow() const
+{
+  //% "%n items"
+  QString const& streamCount = qtTrId("newpipe-searchitem-channel_stream_count", std::max(0ll, m_streamCount));
+
+  //% "%n subscribers"
+  QString const& subscriberCount = qtTrId("newpipe-searchitem-channel_subscriber_count", std::max(0ll, m_subscriberCount));
+
+  //% "%0 • %1"
+  QString const& format = qtTrId("newpipe-searchitem-channel_inforow");
+  return QString(format).arg(streamCount).arg(subscriberCount);
 }

@@ -15,6 +15,7 @@ public:
   qint64 subscriberCount() const;
   qint64 viewCount() const;
   bool verified() const;
+  virtual QString getInfoRow() const override;
 
   void setDescription(QString const& description);
   void setSubscriberCount(qint64 subscriberCount);

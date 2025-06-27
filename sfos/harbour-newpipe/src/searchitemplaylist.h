@@ -15,6 +15,7 @@ public:
   bool uploaderVerified() const;
   qint64 streamCount() const;
   QString description() const;
+  virtual QString getInfoRow() const override;
 
   void setUploaderName(QString const& uploaderName);
   void setUploaderVerified(bool uploaderVerified);

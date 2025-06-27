@@ -65,6 +65,16 @@ void SearchItemPlaylist::parseJson(QJsonObject const& json)
 
   m_uploaderName = json["uploaderName"].toString();
   m_uploaderVerified = json["uploaderVerified"].toBool(false);
-  m_streamCount = json["streamCount"].toInt(-1);
+  m_streamCount = json["streamCount"].toInt(0);
   m_description = json["description"].toString();
+}
+
+QString SearchItemPlaylist::getInfoRow() const
+{
+  //% "%n items"
+  QString const& streamCount = qtTrId("newpipe-searchitem-playlist_stream_count", std::max(0ll, m_streamCount));
+
+  //% "%0 • %1"
+  QString const& format = qtTrId("newpipe-searchitem-playlist_inforow");
+  return QString(format).arg(streamCount).arg(m_uploaderName);
 }

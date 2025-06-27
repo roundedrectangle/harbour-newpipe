@@ -76,5 +76,42 @@
         <source>%0 • %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message id="newpipe-searchitem-channel_stream_count" numerus="yes">
+        <location filename="../src/searchitemchannel.cpp" line="74"/>
+        <source>%n items</source>
+        <oldsource>%n item(s)</oldsource>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message id="newpipe-searchitem-channel_subscriber_count" numerus="yes">
+        <location filename="../src/searchitemchannel.cpp" line="77"/>
+        <source>%n subscribers</source>
+        <oldsource>%n subscriber(s)</oldsource>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message id="newpipe-searchitem-channel_inforow">
+        <location filename="../src/searchitemchannel.cpp" line="80"/>
+        <source>%0 • %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="newpipe-searchitem-playlist_stream_count" numerus="yes">
+        <location filename="../src/searchitemplaylist.cpp" line="75"/>
+        <source>%n items</source>
+        <oldsource>%n item(s)</oldsource>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message id="newpipe-searchitem-playlist_inforow">
+        <location filename="../src/searchitemplaylist.cpp" line="78"/>
+        <source>%0 • %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>
