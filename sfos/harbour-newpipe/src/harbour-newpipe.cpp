@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
   qmlRegisterType<CommentModel>("harbour.newpipe.extractor", 1, 0, "CommentModel");
   qmlRegisterType<MediaInfo>("harbour.newpipe.extractor", 1, 0, "MediaInfo");
   qmlRegisterType<PageRef>("harbour.newpipe.extractor", 1, 0, "PageRef");
+  qmlRegisterType<SearchItem>("harbour.newpipe.extractor", 1, 0, "SearchItem");
   qmlRegisterSingletonType<Utils>("harbour.newpipe.extractor", 1, 0, "Utils", Utils::provider);
 
   engine->addImageProvider(QLatin1String("newpipe"), new ImageProvider());

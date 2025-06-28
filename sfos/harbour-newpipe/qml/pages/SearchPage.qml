@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import harbour.newpipe.extractor 1.0
+import "../components"
 
 Page {
     id: page
@@ -108,13 +109,12 @@ Page {
                 height: thumbnail.height
                 spacing: Theme.paddingLarge
 
-                Image {
+                SearchThumbnail {
                     id: thumbnail
+                    infoType: model.infoType
+                    source: model.thumbnail
                     width: Theme.iconSizeLarge * iconScale
                     height: Theme.iconSizeMedium * iconScale
-                    fillMode: Image.PreserveAspectCrop
-                    verticalAlignment: Image.AlignVCenter
-                    source: model.thumbnail
                 }
 
                 Column {

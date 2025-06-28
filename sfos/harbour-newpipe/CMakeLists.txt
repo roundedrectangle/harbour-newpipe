@@ -110,6 +110,7 @@ add_custom_target(distfiles
         qml/components/MediaDetails.qml
         qml/components/KeyValue.qml
         qml/components/StatItem.qml
+        qml/components/SearchThumbnail.qml
         qml/icons/
         rpm/harbour-newpipe.changes.in
         rpm/harbour-newpipe.changes.run.in

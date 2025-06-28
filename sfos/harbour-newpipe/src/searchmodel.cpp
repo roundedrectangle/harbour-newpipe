@@ -17,6 +17,7 @@ SearchModel::SearchModel(QObject *parent)
   m_roles[NameRole] = "name";
   m_roles[ThumbnailRole] = "thumbnail";
   m_roles[UrlRole] = "url";
+  m_roles[InfoTypeRole] = "infoType";
   m_roles[InfoRowRole] = "infoRow";
 }
 
