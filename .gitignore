@@ -42,5 +42,22 @@ sfos/build-harbour-newpipe-*
 sfos/harbour-newpipe/include
 sfos/harbour-newpipe/lib
 sfos/harbour-newpipe/harbour-newpipe.pro.user
+sfos/harbour-newpipe/translations/*.qm
 
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeLists.txt.user
+QtCreatorDeployment.txt
+sfos/harbour-newpipe/Makefile
+cmake_install.cmake
+debugfiles.list
+debuglinks.list
+debugsourcefiles.list
+debugsources.list
+documentation.list
+elfbins.list
+sfos/harbour-newpipe/harbour-newpipe
+sfos/harbour-newpipe/harbour-newpipe_autogen/
+install_manifest.txt
 
