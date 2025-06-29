@@ -3,29 +3,21 @@
 #include <QPainter>
 #include <QColor>
 #include <QDebug>
-#include <mlite5/MGConfItem>
+#include <silicatheme.h>
+#include <math.h>
 
 #include "imageprovider.h"
 
-ImageProvider::ImageProvider() : QQuickImageProvider(QQuickImageProvider::Pixmap) {
-  double pixelRatio;
-  QScopedPointer<MGConfItem> ratioItem(new MGConfItem("/desktop/sailfish/silica/theme_pixel_ratio"));
-  pixelRatio = ratioItem->value(1.0).toDouble();
-  QString dir;
-  if (pixelRatio > 1.75) {
-      dir = "2.0";
-  }
-  else if (pixelRatio > 1.5) {
-      dir = "1.75";
-  }
-  else if (pixelRatio > 1.25) {
-      dir = "1.5";
-  }
-  else if (pixelRatio > 1.0) {
-      dir = "1.25";
-  }
-  else {
-      dir = "1.0";
+ImageProvider::ImageProvider()
+  : QQuickImageProvider(QQuickImageProvider::Pixmap)
+{
+  Silica::Theme *silicaTheme = Silica::Theme::instance();
+  double pixelRatio = silicaTheme->pixelRatio();
+
+  double quantised = std::min(std::max(std::ceil(pixelRatio * 4.0) / 4.0, 1.0), 2.0);
+  QString dir = QString::number(quantised, 'f', 2);
+  if (dir.length() == 4 && dir.at(3) == '0') {
+    dir.truncate(3);
   }
 
   m_imageDir = SailfishApp::pathTo("qml/images/z" + dir).toString(QUrl::RemoveScheme) + "/";

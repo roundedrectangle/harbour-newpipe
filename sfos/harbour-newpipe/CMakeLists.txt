@@ -5,7 +5,7 @@ find_package(Qt5 COMPONENTS Core Network Qml Gui Quick LinguistTools REQUIRED)
 
 include(FindPkgConfig)
 pkg_search_module(SAILFISH sailfishapp REQUIRED)
-pkg_search_module(MLITE5 REQUIRED mlite5)
+pkg_search_module(SILICA REQUIRED sailfishsilica)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -20,13 +20,13 @@ target_compile_definitions(harbour-newpipe PRIVATE
 target_include_directories(harbour-newpipe PRIVATE
     $<BUILD_INTERFACE:
     ${SAILFISH_INCLUDE_DIRS}>
-    ${MLITE5_INCLUDE_DIRS}
+    ${SILICA_INCLUDE_DIRS}
     PRIVATE "${CMAKE_SOURCE_DIR}/include"
 )
 target_link_libraries(harbour-newpipe
     Qt5::Quick
     ${SAILFISH_LDFLAGS}
-    ${MLITE5_LIBRARIES}
+    ${SILICA_LIBRARIES}
     -l:appwrapper.so
 )
 target_sources(harbour-newpipe PRIVATE
