@@ -44,7 +44,7 @@ ssh -p ${PORT} ${COMPILEHOST} "if [ ! -d \"${COMPILEHOST_GRAAL}\" ]; then cd ${C
 # Trqnsfer using rsync
 echo "Transferring code to phone"
 pushd NewPipeExtractor
-rsync -ah --info=progress2 --update -e "ssh -p ${PORT}" . ${COMPILEHOST}:${COMPILEHOST_WORKSPACE}
+rsync -ah --info=progress2 --delete --update -e "ssh -p ${PORT}" . ${COMPILEHOST}:${COMPILEHOST_WORKSPACE}
 popd
 
 # Build using GraalVM
