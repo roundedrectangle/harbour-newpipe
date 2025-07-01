@@ -143,11 +143,28 @@ Page {
             }
 
             onClicked: {
-                pageStack.push(Qt.resolvedUrl("VideoPage.qml"), {
-                    name: model.name,
-                    thumbnail: model.thumbnail,
-                    url: model.url
-                });
+                switch (model.infoType) {
+                    case SearchItem.Channel:
+                        pageStack.push(Qt.resolvedUrl("ChannelPage.qml"), {
+                            name: model.name,
+                            thumbnail: model.thumbnail,
+                            url: model.url
+                        });
+                        break;
+                    case SearchItem.Playlist:
+                        // Do nothing
+                        break;
+                    case SearchItem.Playlist:
+                        pageStack.push(Qt.resolvedUrl("VideoPage.qml"), {
+                            name: model.name,
+                            thumbnail: model.thumbnail,
+                            url: model.url
+                        });
+                        break;
+                    default:
+                        console.log("Unknown search item type: " + model.infoType);
+                        break;
+                }
             }
         }
     }
