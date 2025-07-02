@@ -45,6 +45,9 @@ target_sources(harbour-newpipe PRIVATE
     "src/commentitem.cpp"
     "src/pageref.cpp"
     "src/lifetimecheck.cpp"
+    "src/channelinfo.cpp"
+    "src/channeltabinfo.cpp"
+    "src/listlinkhandler.cpp"
 )
 
 # Update the translations

@@ -12,6 +12,9 @@
 #include "mediainfo.h"
 #include "pageref.h"
 #include "lifetimecheck.h"
+#include "channelinfo.h"
+#include "channeltabinfo.h"
+#include "listlinkhandler.h"
 
 #include "extractor.h"
 
@@ -272,4 +275,52 @@ void Extractor::appendMoreComments(CommentModel* commentModel, QString const& ur
     delete watcher;
   });
   watcher->setFuture(invokeAsync("getMoreCommentItems", &document));
+}
+
+void Extractor::getChannelInfo(ChannelInfo* channelInfo, QString const& url)
+{
+  QJsonObject json;
+  QJsonDocument document;
+
+  json["service"] = QStringLiteral("YouTube");
+  json["url"] = url;
+  document = QJsonDocument(json);
+
+  QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
+  LifetimeCheck* lifetimeCheck = new LifetimeCheck(channelInfo, watcher);
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, channelInfo, lifetimeCheck]() {
+    if (!lifetimeCheck->destroyed()) {
+      QJsonDocument result = watcher->result();
+      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+
+      channelInfo->parseJson(result.object());
+    }
+
+    delete watcher;
+  });
+  watcher->setFuture(invokeAsync("getChannelInfo", &document));
+}
+
+void Extractor::getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandler const& linkHandler)
+{
+  QJsonObject json;
+  QJsonDocument document;
+
+  json["service"] = QStringLiteral("YouTube");
+  json["linkHandler"] = linkHandler.toJson();
+  document = QJsonDocument(json);
+
+  QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
+  LifetimeCheck* lifetimeCheck = new LifetimeCheck(channelTabInfo, watcher);
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, channelTabInfo, lifetimeCheck]() {
+    if (!lifetimeCheck->destroyed()) {
+      QJsonDocument result = watcher->result();
+      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+
+      channelTabInfo->parseJson(result.object());
+    }
+
+    delete watcher;
+  });
+  watcher->setFuture(invokeAsync("getChannelTabInfo", &document));
 }
