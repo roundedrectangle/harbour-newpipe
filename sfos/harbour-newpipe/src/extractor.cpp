@@ -291,9 +291,10 @@ void Extractor::getChannelInfo(ChannelInfo* channelInfo, QString const& url)
   QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, channelInfo, lifetimeCheck]() {
     if (!lifetimeCheck->destroyed()) {
       QJsonDocument result = watcher->result();
-      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+      qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
       channelInfo->parseJson(result.object());
+      emit extracted(channelInfo->url());
     }
 
     delete watcher;
@@ -315,7 +316,7 @@ void Extractor::getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandle
   QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, channelTabInfo, lifetimeCheck]() {
     if (!lifetimeCheck->destroyed()) {
       QJsonDocument result = watcher->result();
-      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+      qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
       channelTabInfo->parseJson(result.object());
     }

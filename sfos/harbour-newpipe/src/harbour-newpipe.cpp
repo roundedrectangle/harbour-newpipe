@@ -9,6 +9,8 @@
 #include "utils.h"
 #include "imageprovider.h"
 #include "pageref.h"
+#include "channelinfo.h"
+#include "channeltabinfo.h"
 
 int main(int argc, char *argv[])
 {
@@ -29,6 +31,8 @@ int main(int argc, char *argv[])
   qmlRegisterType<MediaInfo>("harbour.newpipe.extractor", 1, 0, "MediaInfo");
   qmlRegisterType<PageRef>("harbour.newpipe.extractor", 1, 0, "PageRef");
   qmlRegisterType<SearchItem>("harbour.newpipe.extractor", 1, 0, "SearchItem");
+  qmlRegisterType<ChannelInfo>("harbour.newpipe.extractor", 1, 0, "ChannelInfo");
+  qmlRegisterType<ChannelTabInfo>("harbour.newpipe.extractor", 1, 0, "ChannelTabInfo");
   qmlRegisterSingletonType<Utils>("harbour.newpipe.extractor", 1, 0, "Utils", Utils::provider);
 
   engine->addImageProvider(QLatin1String("newpipe"), new ImageProvider());
