@@ -1,6 +1,7 @@
 #ifndef LISTLINKHANDLER_H
 #define LISTLINKHANDLER_H
 
+#include <QJsonObject>
 #include <QObject>
 
 class ListLinkHandler : public QObject
@@ -11,6 +12,7 @@ public:
   explicit ListLinkHandler(QString const& originalUrl, QString const& url, QString const& id, QStringList const& contentFilters, QString const& sortFilter, QObject *parent = nullptr);
   explicit ListLinkHandler(QJsonObject const& json, QObject *parent = nullptr);
 
+public slots:
   QString originalUrl() const;
   QString url() const;
   QString id() const;
@@ -35,5 +37,7 @@ private:
   QStringList m_contentFilters;
   QString m_sortFilter;
 };
+
+Q_DECLARE_METATYPE(ListLinkHandler*)
 
 #endif // LISTLINKHANDLER_H

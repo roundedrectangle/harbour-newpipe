@@ -14,6 +14,7 @@ class PageRef;
 class ChannelInfo;
 class ChannelTabInfo;
 class ListLinkHandler;
+class LinkHandlerModel;
 
 class Extractor : public QObject
 {
@@ -32,8 +33,8 @@ public slots:
   void getComments(CommentModel* commentModel, QString const& url);
   void getMoreComments(CommentModel* commentModel, QString const& url, PageRef* page);
   void appendMoreComments(CommentModel* commentModel, QString const& url, PageRef* page);
-  void getChannelInfo(ChannelInfo* channelInfo, QString const& url);
-  void getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandler const& linkHandler);
+  void getChannelInfo(ChannelInfo* channelInfo, LinkHandlerModel* linkHandlerModel, QString const& url);
+  void getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandler* linkHandler);
 
 signals:
   void extracted(QString const& url);

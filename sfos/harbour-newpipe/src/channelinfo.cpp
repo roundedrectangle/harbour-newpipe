@@ -16,7 +16,7 @@ ChannelInfo::ChannelInfo(QObject *parent)
 
 }
 
-ChannelInfo::ChannelInfo(QString const& id, QString const& name, QString const& url, QString const& description, QList<ListLinkHandler const*> const& tabs, QObject *parent)
+ChannelInfo::ChannelInfo(QString const& id, QString const& name, QString const& url, QString const& description, QList<ListLinkHandler*> const& tabs, QObject *parent)
   : QObject(parent)
   , m_id(id)
   , m_name(name)
@@ -53,7 +53,7 @@ QString ChannelInfo::description() const
   return m_description;
 }
 
-QList<ListLinkHandler const*> ChannelInfo::tabs()
+QList<ListLinkHandler*> ChannelInfo::tabs()
 {
   return m_tabs;
 }
@@ -78,7 +78,7 @@ void ChannelInfo::setDescription(QString const& description)
   m_description = description;
 }
 
-void ChannelInfo::setTabs(QList<ListLinkHandler const*> const& tabs)
+void ChannelInfo::setTabs(QList<ListLinkHandler*> const& tabs)
 {
   m_tabs = tabs;
 }

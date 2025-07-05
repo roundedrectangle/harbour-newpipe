@@ -15,6 +15,7 @@
 #include "channelinfo.h"
 #include "channeltabinfo.h"
 #include "listlinkhandler.h"
+#include "linkhandlermodel.h"
 
 #include "extractor.h"
 
@@ -277,7 +278,7 @@ void Extractor::appendMoreComments(CommentModel* commentModel, QString const& ur
   watcher->setFuture(invokeAsync("getMoreCommentItems", &document));
 }
 
-void Extractor::getChannelInfo(ChannelInfo* channelInfo, QString const& url)
+void Extractor::getChannelInfo(ChannelInfo* channelInfo, LinkHandlerModel* linkHandlerModel, QString const& url)
 {
   QJsonObject json;
   QJsonDocument document;
@@ -288,12 +289,13 @@ void Extractor::getChannelInfo(ChannelInfo* channelInfo, QString const& url)
 
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
   LifetimeCheck* lifetimeCheck = new LifetimeCheck(channelInfo, watcher);
-  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, channelInfo, lifetimeCheck]() {
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, channelInfo, lifetimeCheck, linkHandlerModel]() {
     if (!lifetimeCheck->destroyed()) {
       QJsonDocument result = watcher->result();
       qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
       channelInfo->parseJson(result.object());
+      linkHandlerModel->setModel(channelInfo);
       emit extracted(channelInfo->url());
     }
 
@@ -302,13 +304,13 @@ void Extractor::getChannelInfo(ChannelInfo* channelInfo, QString const& url)
   watcher->setFuture(invokeAsync("getChannelInfo", &document));
 }
 
-void Extractor::getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandler const& linkHandler)
+void Extractor::getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandler* linkHandler)
 {
   QJsonObject json;
   QJsonDocument document;
 
+  json = linkHandler->toJson();
   json["service"] = QStringLiteral("YouTube");
-  json["linkHandler"] = linkHandler.toJson();
   document = QJsonDocument(json);
 
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();

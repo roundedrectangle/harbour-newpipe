@@ -10,15 +10,25 @@ Page {
     property string url
     property ChannelInfo channelInfo: ChannelInfo { }
     property ChannelTabInfo channelTabInfo: ChannelTabInfo { }
+    property LinkHandlerModel linkHandlerModel: LinkHandlerModel { }
 
     Component.onCompleted: {
-        extractor.getChannelInfo(channelInfo, url);
+        extractor.getChannelInfo(channelInfo, linkHandlerModel, url);
     }
 
     Connections {
         target: extractor
         onExtracted: {
+            var length = linkHandlerModel.count();
+            console.log("Number of tabs: " + length);
+
+            for (var pos = 0; pos < length; pos++) {
+                var tab = linkHandlerModel.getLinkHandler(pos);
+                console.log("Tab: " + tab.contentFilters()[0]);
+            }
+            var linkHandler = linkHandlerModel.getLinkHandler(0);
             console.log("Extracted URL: " + url);
+            extractor.getChannelTabInfo(channelTabInfo, linkHandler)
         }
     }
 
