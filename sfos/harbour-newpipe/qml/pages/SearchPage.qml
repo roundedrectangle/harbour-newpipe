@@ -148,13 +148,14 @@ Page {
                         pageStack.push(Qt.resolvedUrl("ChannelPage.qml"), {
                             name: model.name,
                             thumbnail: model.thumbnail,
-                            url: model.url
+                            url: model.url,
+                            infoRow: model.infoRow
                         });
                         break;
                     case SearchItem.Playlist:
                         // Do nothing
                         break;
-                    case SearchItem.Playlist:
+                    case SearchItem.Stream:
                         pageStack.push(Qt.resolvedUrl("VideoPage.qml"), {
                             name: model.name,
                             thumbnail: model.thumbnail,
