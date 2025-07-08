@@ -34,7 +34,7 @@ public slots:
   void getMoreComments(CommentModel* commentModel, QString const& url, PageRef* page);
   void appendMoreComments(CommentModel* commentModel, QString const& url, PageRef* page);
   void getChannelInfo(ChannelInfo* channelInfo, LinkHandlerModel* linkHandlerModel, QString const& url);
-  void getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandler* linkHandler);
+  void getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandler* linkHandler, SearchModel* videoModel);
 
 signals:
   void extracted(QString const& url);

@@ -7,13 +7,14 @@ import "../components"
 Page {
     id: root
     property string name
-    property string thumbnail
+    property url thumbnail
     property string url
     property string infoRow
     property ChannelInfo channelInfo: ChannelInfo { }
     property ChannelTabInfo channelTabInfo: ChannelTabInfo { }
     property LinkHandlerModel linkHandlerModel: LinkHandlerModel { }
     readonly property real iconScale: 1.5
+    property SearchModel videoModel: SearchModel { }
 
     Component.onCompleted: {
         extractor.getChannelInfo(channelInfo, linkHandlerModel, url);
@@ -31,7 +32,7 @@ Page {
             }
             var linkHandler = linkHandlerModel.getLinkHandler(0);
             console.log("Extracted URL: " + url);
-            extractor.getChannelTabInfo(channelTabInfo, linkHandler)
+            extractor.getChannelTabInfo(channelTabInfo, linkHandler, videoModel)
         }
     }
 
@@ -119,15 +120,26 @@ Page {
                 anchors.fill: parent
                 flickable: flickable
 
-                SilicaFlickable {
+                SilicaListView {
                     id: flickable
                     anchors.fill: parent
 
+                    model: videoModel
+
+                    VerticalScrollDecorator {}
+
                     ViewPlaceholder {
-                        enabled: true
+                        enabled: flickable.count === 0
                         textFormat: Text.RichText
-                        text: "Videos"
-                        hintText: "Under Construction"
+                        text: "No videos"
+                    }
+
+                    delegate: SearchDelegate {
+                        infoType: model.infoType
+                        thumbnail: model.thumbnail
+                        name: model.name
+                        url: model.url
+                        infoRow: model.infoRow
                     }
                 }
             }

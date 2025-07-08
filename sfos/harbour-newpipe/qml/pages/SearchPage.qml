@@ -87,86 +87,12 @@ Page {
             hintText: qsTrId("newpipe-proglist_search-enter-some-text")
         }
 
-        delegate: BackgroundItem {
-            id: delegate
-            focus: false
-            height: thumbnail.height + (2 * Theme.paddingMedium)
-            readonly property real iconScale: 1.5
-
-            ListView.onAdd: AddAnimation {
-                id: animadd
-                target: delegate
-            }
-            ListView.onRemove: RemoveAnimation {
-                id: animremove
-                target: delegate
-            }
-
-            Row {
-                x: Theme.paddingLarge
-                y: Theme.paddingMedium
-                width: parent.width - (2 * Theme.paddingLarge)
-                height: thumbnail.height
-                spacing: Theme.paddingLarge
-
-                SearchThumbnail {
-                    id: thumbnail
-                    infoType: model.infoType
-                    source: model.thumbnail
-                    width: Theme.iconSizeLarge * iconScale
-                    height: Theme.iconSizeMedium * iconScale
-                }
-
-                Column {
-                    width: parent.width - thumbnail.width - Theme.paddingLarge
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    Label {
-                        color: delegate.pressed ? Theme.highlightColor : Theme.primaryColor
-                        textFormat: Text.PlainText
-                        text: model.name
-                        width: parent.width
-                        truncationMode: TruncationMode.Fade
-                        focus: false
-                    }
-
-                    Label {
-                        color: delegate.pressed ? Theme.secondaryHighlightColor : Theme.secondaryColor
-                        textFormat: Text.PlainText
-                        font.pixelSize: Theme.fontSizeExtraSmall
-                        text: model.infoRow || ""
-                        truncationMode: TruncationMode.Fade
-                        focus: false
-                        visible: !!model.infoRow
-                    }
-                }
-            }
-
-            onClicked: {
-                switch (model.infoType) {
-                    case SearchItem.Channel:
-                        pageStack.push(Qt.resolvedUrl("ChannelPage.qml"), {
-                            name: model.name,
-                            thumbnail: model.thumbnail,
-                            url: model.url,
-                            infoRow: model.infoRow
-                        });
-                        break;
-                    case SearchItem.Playlist:
-                        // Do nothing
-                        break;
-                    case SearchItem.Stream:
-                        pageStack.push(Qt.resolvedUrl("VideoPage.qml"), {
-                            name: model.name,
-                            thumbnail: model.thumbnail,
-                            url: model.url
-                        });
-                        break;
-                    default:
-                        console.log("Unknown search item type: " + model.infoType);
-                        break;
-                }
-            }
+        delegate: SearchDelegate {
+            infoType: model.infoType
+            thumbnail: model.thumbnail
+            name: model.name
+            url: model.url
+            infoRow: model.infoRow
         }
     }
 }

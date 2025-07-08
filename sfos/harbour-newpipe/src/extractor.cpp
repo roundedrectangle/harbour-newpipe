@@ -304,7 +304,7 @@ void Extractor::getChannelInfo(ChannelInfo* channelInfo, LinkHandlerModel* linkH
   watcher->setFuture(invokeAsync("getChannelInfo", &document));
 }
 
-void Extractor::getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandler* linkHandler)
+void Extractor::getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandler* linkHandler, SearchModel* videoModel)
 {
   QJsonObject json;
   QJsonDocument document;
@@ -315,12 +315,22 @@ void Extractor::getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandle
 
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
   LifetimeCheck* lifetimeCheck = new LifetimeCheck(channelTabInfo, watcher);
-  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, channelTabInfo, lifetimeCheck]() {
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, channelTabInfo, lifetimeCheck, videoModel]() {
     if (!lifetimeCheck->destroyed()) {
       QJsonDocument result = watcher->result();
       qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
       channelTabInfo->parseJson(result.object());
+
+      QJsonArray items = result.object()["relatedItems"].toArray();
+      QList<SearchItem const*> searchResults;
+      for (QJsonValue const& item : items) {
+        SearchItem const* deserialised = SearchItem::createSearchItem(item.toObject(), m_searchModel);
+        searchResults.append(deserialised);
+      }
+      videoModel->replaceAll(searchResults);
+      PageRef* page = new PageRef(result.object()["nextPage"].toObject(), videoModel);
+      videoModel->setNextPage(page);
     }
 
     delete watcher;

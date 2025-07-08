@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
   Utils::instantiate();
 
   qmlRegisterType<Extractor>("harbour.newpipe.extractor", 1, 0, "Extractor");
+  qmlRegisterType<SearchModel>("harbour.newpipe.extractor", 1, 0, "SearchModel");
   qmlRegisterType<CommentModel>("harbour.newpipe.extractor", 1, 0, "CommentModel");
   qmlRegisterType<MediaInfo>("harbour.newpipe.extractor", 1, 0, "MediaInfo");
   qmlRegisterType<PageRef>("harbour.newpipe.extractor", 1, 0, "PageRef");
