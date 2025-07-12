@@ -11,10 +11,9 @@ Page {
     property string url
     property string infoRow
     property ChannelInfo channelInfo: ChannelInfo { }
-    property ChannelTabInfo channelTabInfo: ChannelTabInfo { }
     property LinkHandlerModel linkHandlerModel: LinkHandlerModel { }
     readonly property real iconScale: 1.5
-    property SearchModel videoModel: SearchModel { }
+    property ChannelModel videoModel: ChannelModel { }
 
     Component.onCompleted: {
         extractor.getChannelInfo(channelInfo, linkHandlerModel, url);
@@ -30,9 +29,9 @@ Page {
                 var tab = linkHandlerModel.getLinkHandler(pos);
                 console.log("Tab: " + tab.contentFilters()[0]);
             }
-            var linkHandler = linkHandlerModel.getLinkHandler(0);
+            videoModel.linkHandler = linkHandlerModel.getLinkHandler(0);
             console.log("Extracted URL: " + url);
-            extractor.getChannelTabInfo(channelTabInfo, linkHandler, videoModel)
+            videoModel.search(extractor);
         }
     }
 
@@ -132,7 +131,7 @@ Page {
                         var pos = contentHeight + originY - height - contentY;
                         if ((pos < height) && !videoModel.loading && videoModel.more && videoModel.nextPage) {
                             var linkHandler = linkHandlerModel.getLinkHandler(0);
-                            videoModel.getMoreChannelItems(extractor, linkHandler);
+                            videoModel.searchMore(extractor);
                         }
                     }
 

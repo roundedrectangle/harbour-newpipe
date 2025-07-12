@@ -3,6 +3,7 @@
 #include <sailfishapp.h>
 
 #include "searchmodel.h"
+#include "channelmodel.h"
 #include "commentmodel.h"
 #include "extractor.h"
 #include "mediainfo.h"
@@ -29,6 +30,7 @@ int main(int argc, char *argv[])
 
   qmlRegisterType<Extractor>("harbour.newpipe.extractor", 1, 0, "Extractor");
   qmlRegisterType<SearchModel>("harbour.newpipe.extractor", 1, 0, "SearchModel");
+  qmlRegisterType<ChannelModel>("harbour.newpipe.extractor", 1, 0, "ChannelModel");
   qmlRegisterType<CommentModel>("harbour.newpipe.extractor", 1, 0, "CommentModel");
   qmlRegisterType<MediaInfo>("harbour.newpipe.extractor", 1, 0, "MediaInfo");
   qmlRegisterType<PageRef>("harbour.newpipe.extractor", 1, 0, "PageRef");

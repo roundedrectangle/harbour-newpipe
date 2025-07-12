@@ -49,6 +49,7 @@ target_sources(harbour-newpipe PRIVATE
     "src/channeltabinfo.cpp"
     "src/listlinkhandler.cpp"
     "src/linkhandlermodel.cpp"
+    "src/channelmodel.cpp"
 )
 
 # Update the translations

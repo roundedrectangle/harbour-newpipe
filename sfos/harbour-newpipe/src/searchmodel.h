@@ -14,6 +14,7 @@ class SearchModel : public QAbstractListModel
   Q_PROPERTY(PageRef* nextPage READ nextPage WRITE setNextPage NOTIFY nextPageChanged)
   Q_PROPERTY(bool loading READ loading WRITE setLoading NOTIFY loadingChanged)
   Q_PROPERTY(bool more READ more WRITE setMore NOTIFY moreChanged)
+  Q_PROPERTY(QString searchTerm READ searchTerm WRITE setSearchTerm NOTIFY searchTermChanged)
 
   Q_OBJECT
 public:
@@ -38,8 +39,8 @@ public:
   void append(QList<SearchItem const*> const& searchResults);
 
 public slots:
-  void search(Extractor* extractor, QString const& searchTerm);
-  void searchMore(Extractor* extractor);
+  virtual void search(Extractor* extractor);
+  virtual void searchMore(Extractor* extractor);
   void getMoreChannelItems(Extractor* extractor, ListLinkHandler* linkHandler);
 
   PageRef* nextPage() const;
@@ -65,8 +66,9 @@ signals:
   void nextPageChanged();
   void loadingChanged();
   void moreChanged();
+  void searchTermChanged();
 
-private:
+protected:
   QHash<int, QByteArray> m_roles;
   QList<SearchItem const*> m_searchResults;
   PageRef* m_nextPage;

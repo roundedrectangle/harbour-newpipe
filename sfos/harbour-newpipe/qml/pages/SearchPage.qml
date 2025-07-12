@@ -6,7 +6,7 @@ import "../components"
 Page {
     id: page
 
-    property string searchString
+    property string searchTerm
     property string screenName
     property int totalitems: 0
     property bool busy: false
@@ -14,7 +14,7 @@ Page {
     readonly property alias pendingSearch: searchTimer.running
     property SearchModel searchModel: SearchModel { id: searchModel }
 
-    onSearchStringChanged: {
+    onSearchTermChanged: {
         searchTimer.restart()
     }
 
@@ -23,7 +23,8 @@ Page {
         interval: 500
         repeat: false
         onTriggered: {
-            searchModel.search(extractor, searchString);
+            searchModel.searchTerm = searchTerm;
+            searchModel.search(extractor);
         }
     }
 
@@ -73,7 +74,7 @@ Page {
 
                 Binding {
                     target: page
-                    property: "searchString"
+                    property: "searchTerm"
                     value: searchField.text.toLowerCase().trim()
                 }
             }

@@ -83,13 +83,12 @@ void SearchModel::append(QList<SearchItem const*> const& searchResults)
   setLoading(false);
 }
 
-void SearchModel::search(Extractor* extractor, QString const& searchTerm)
+void SearchModel::search(Extractor* extractor)
 {
   if (m_nextPage) {
     m_nextPage = nullptr;
     delete m_nextPage;
   }
-  m_searchTerm = searchTerm;
   m_contentFilters.clear();
   m_sortFilter.clear();
   setLoading(true);
@@ -166,6 +165,7 @@ void SearchModel::setMore(bool more)
 {
   if (m_more != more) {
     m_more = more;
+
     emit moreChanged();
   }
 }
@@ -177,7 +177,11 @@ QString SearchModel::searchTerm() const
 
 void SearchModel::setSearchTerm(QString const& searchTerm)
 {
-  m_searchTerm = searchTerm;
+  if (m_searchTerm != searchTerm) {
+    m_searchTerm = searchTerm;
+
+    emit searchTermChanged();
+  }
 }
 
 QStringList SearchModel::contentFilters() const
