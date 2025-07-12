@@ -12,6 +12,7 @@ Page {
     property bool busy: false
     property int displayCount: 0
     readonly property alias pendingSearch: searchTimer.running
+    property SearchModel searchModel: SearchModel { id: searchModel }
 
     onSearchStringChanged: {
         searchTimer.restart()

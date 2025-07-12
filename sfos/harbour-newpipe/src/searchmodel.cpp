@@ -93,7 +93,7 @@ void SearchModel::search(Extractor* extractor, QString const& searchTerm)
   m_contentFilters.clear();
   m_sortFilter.clear();
   setLoading(true);
-  extractor->search(m_searchTerm, m_contentFilters, m_sortFilter);
+  extractor->search(this, m_searchTerm, m_contentFilters, m_sortFilter);
 }
 
 void SearchModel::searchMore(Extractor* extractor)
@@ -101,12 +101,12 @@ void SearchModel::searchMore(Extractor* extractor)
   if (m_more) {
     if (!m_nextPage) {
       setLoading(true);
-      extractor->search(m_searchTerm, m_contentFilters, m_sortFilter);
+      extractor->search(this, m_searchTerm, m_contentFilters, m_sortFilter);
     }
     else {
       if (!(m_nextPage->id().isEmpty() && m_nextPage->ids().empty())) {
         setLoading(true);
-        extractor->searchMore(m_searchTerm, m_contentFilters, m_sortFilter, m_nextPage);
+        extractor->searchMore(this, m_searchTerm, m_contentFilters, m_sortFilter, m_nextPage);
       }
     }
   }

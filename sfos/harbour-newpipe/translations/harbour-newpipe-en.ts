@@ -17,17 +17,17 @@
         <translation type="unfinished">Replies</translation>
     </message>
     <message id="newpipe-proglist_search-placeholder">
-        <location filename="../qml/pages/SearchPage.qml" line="66"/>
+        <location filename="../qml/pages/SearchPage.qml" line="67"/>
         <source>Search</source>
         <translation type="unfinished">Search</translation>
     </message>
     <message id="newpipe-proglist_search-no-entries">
-        <location filename="../qml/pages/SearchPage.qml" line="85"/>
+        <location filename="../qml/pages/SearchPage.qml" line="86"/>
         <source>No entries</source>
         <translation type="unfinished">No entries</translation>
     </message>
     <message id="newpipe-proglist_search-enter-some-text">
-        <location filename="../qml/pages/SearchPage.qml" line="87"/>
+        <location filename="../qml/pages/SearchPage.qml" line="88"/>
         <source>Enter some text to search</source>
         <translation type="unfinished">Enter some text to search</translation>
     </message>

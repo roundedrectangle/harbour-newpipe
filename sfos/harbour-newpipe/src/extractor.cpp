@@ -21,13 +21,6 @@
 
 Extractor::Extractor(QObject *parent)
   : QObject(parent)
-  , m_searchModel()
-{
-}
-
-Extractor::Extractor(SearchModel* searchModel, QObject *parent)
-  : QObject(parent)
-  , m_searchModel(searchModel)
 {
   QFuture<QString> initialise;
   m_threadPool.setExpiryTimeout(-1);
@@ -76,7 +69,7 @@ QFuture<QJsonDocument> Extractor::invokeAsync(QString const methodName, QJsonDoc
   return QtConcurrent::run(&m_threadPool, invoke, &Invoke::run);
 }
 
-void Extractor::search(QString const& searchTerm, QStringList const& contentFilter, QString const& sortFilter)
+void Extractor::search(SearchModel* searchModel, QString const& searchTerm, QStringList const& contentFilter, QString const& sortFilter)
 {
   QJsonObject json;
   QJsonArray filters;
@@ -97,26 +90,29 @@ void Extractor::search(QString const& searchTerm, QStringList const& contentFilt
   document = QJsonDocument(json);
 
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
-  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher]() {
-    QJsonDocument result = watcher->result();
-    //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+  LifetimeCheck* lifetimeCheck = new LifetimeCheck(searchModel, watcher);
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, lifetimeCheck, searchModel]() {
+    if (!lifetimeCheck->destroyed()) {
+      QJsonDocument result = watcher->result();
+      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
-    QJsonArray items = result.object()["relatedItems"].toArray();
-    QList<SearchItem const*> searchResults;
-    for (QJsonValue const& item : items) {
-      SearchItem const* deserialised = SearchItem::createSearchItem(item.toObject(), m_searchModel);
-      searchResults.append(deserialised);
+      QJsonArray items = result.object()["relatedItems"].toArray();
+      QList<SearchItem const*> searchResults;
+      for (QJsonValue const& item : items) {
+        SearchItem const* deserialised = SearchItem::createSearchItem(item.toObject(), searchModel);
+        searchResults.append(deserialised);
+      }
+      searchModel->replaceAll(searchResults);
+      PageRef* page = new PageRef(result.object()["nextPage"].toObject(), searchModel);
+      searchModel->setNextPage(page);
     }
-    m_searchModel->replaceAll(searchResults);
-    PageRef* page = new PageRef(result.object()["nextPage"].toObject(), m_searchModel);
-    m_searchModel->setNextPage(page);
 
     delete watcher;
   });
   watcher->setFuture(invokeAsync("searchFor", &document));
 }
 
-void Extractor::searchMore(QString const& searchTerm, QStringList const& contentFilter, QString const& sortFilter, PageRef* page)
+void Extractor::searchMore(SearchModel* searchModel, QString const& searchTerm, QStringList const& contentFilter, QString const& sortFilter, PageRef* page)
 {
   QJsonObject json;
   QJsonArray filters;
@@ -138,19 +134,22 @@ void Extractor::searchMore(QString const& searchTerm, QStringList const& content
   document = QJsonDocument(json);
 
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
-  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher]() {
-    QJsonDocument result = watcher->result();
-    qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+  LifetimeCheck* lifetimeCheck = new LifetimeCheck(searchModel, watcher);
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, lifetimeCheck, searchModel]() {
+    if (!lifetimeCheck->destroyed()) {
+      QJsonDocument result = watcher->result();
+      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
-    QJsonArray items = result.object()["itemsList"].toArray();
-    QList<SearchItem const*> searchResults;
-    for (QJsonValue const& item : items) {
-      SearchItem const* deserialised = SearchItem::createSearchItem(item.toObject(), m_searchModel);
-      searchResults.append(deserialised);
+      QJsonArray items = result.object()["itemsList"].toArray();
+      QList<SearchItem const*> searchResults;
+      for (QJsonValue const& item : items) {
+        SearchItem const* deserialised = SearchItem::createSearchItem(item.toObject(), searchModel);
+        searchResults.append(deserialised);
+      }
+      searchModel->append(searchResults);
+      PageRef* page = new PageRef(result.object()["nextPage"].toObject(), searchModel);
+      searchModel->setNextPage(page);
     }
-    m_searchModel->append(searchResults);
-    PageRef* page = new PageRef(result.object()["nextPage"].toObject(), m_searchModel);
-    m_searchModel->setNextPage(page);
 
     delete watcher;
   });
@@ -328,9 +327,10 @@ void Extractor::getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandle
   document = QJsonDocument(json);
 
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
-  LifetimeCheck* lifetimeCheck = new LifetimeCheck(channelTabInfo, watcher);
-  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, channelTabInfo, lifetimeCheck, videoModel]() {
-    if (!lifetimeCheck->destroyed()) {
+  LifetimeCheck* lifetimeChannelTabInfo = new LifetimeCheck(channelTabInfo, watcher);
+  LifetimeCheck* lifetimeCVideoModel = new LifetimeCheck(videoModel, watcher);
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, channelTabInfo, lifetimeChannelTabInfo, videoModel, lifetimeCVideoModel]() {
+    if (!lifetimeChannelTabInfo->destroyed() && !lifetimeCVideoModel->destroyed()) {
       QJsonDocument result = watcher->result();
       //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 

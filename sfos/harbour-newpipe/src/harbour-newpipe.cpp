@@ -24,8 +24,7 @@ int main(int argc, char *argv[])
   QScopedPointer<QQuickView> view(SailfishApp::createView());
   QQmlContext* ctxt = view->rootContext();
   QQmlEngine* engine = view->engine();
-  QScopedPointer<SearchModel> searchModel(new SearchModel(app.data()));
-  QScopedPointer<Extractor> extractor(new Extractor(searchModel.data(), app.data()));
+  QScopedPointer<Extractor> extractor(new Extractor(app.data()));
   Utils::instantiate();
 
   qmlRegisterType<Extractor>("harbour.newpipe.extractor", 1, 0, "Extractor");
@@ -43,7 +42,6 @@ int main(int argc, char *argv[])
   engine->addImageProvider(QLatin1String("newpipe"), new ImageProvider());
 
   ctxt->setContextProperty("extractor", extractor.data());
-  ctxt->setContextProperty("searchModel", searchModel.data());
 
   view->setSource(SailfishApp::pathTo("qml/harbour-newpipe.qml"));
   view->show();
