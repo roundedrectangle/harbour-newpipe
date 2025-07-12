@@ -27,14 +27,15 @@ public:
   static int compareResolutions(QString const& first, QString const& second);
 
 public slots:
-  void search(QString const& searchTerm);
-  void searchMore(QString const& searchTerm, PageRef* page);
+  void search(QString const& searchTerm, QStringList const& contentFilter, QString const& sortFilter);
+  void searchMore(QString const& searchTerm, QStringList const& contentFilter, QString const& sortFilter, PageRef* page);
   void downloadExtract(MediaInfo* mediaInfo, QString const& url);
   void getComments(CommentModel* commentModel, QString const& url);
   void getMoreComments(CommentModel* commentModel, QString const& url, PageRef* page);
   void appendMoreComments(CommentModel* commentModel, QString const& url, PageRef* page);
   void getChannelInfo(ChannelInfo* channelInfo, LinkHandlerModel* linkHandlerModel, QString const& url);
   void getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandler* linkHandler, SearchModel* videoModel);
+  void getMoreChannelItems(ListLinkHandler* linkHandler, PageRef* page, SearchModel* videoModel);
 
 signals:
   void extracted(QString const& url);

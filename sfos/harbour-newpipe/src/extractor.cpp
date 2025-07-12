@@ -76,17 +76,24 @@ QFuture<QJsonDocument> Extractor::invokeAsync(QString const methodName, QJsonDoc
   return QtConcurrent::run(&m_threadPool, invoke, &Invoke::run);
 }
 
-void Extractor::search(QString const& searchTerm)
+void Extractor::search(QString const& searchTerm, QStringList const& contentFilter, QString const& sortFilter)
 {
   QJsonObject json;
-  QJsonArray contentFilter;
+  QJsonArray filters;
   QJsonDocument document;
 
   json["service"] = QStringLiteral("YouTube");
   json["searchString"] = searchTerm;
-  contentFilter.push_back(QStringLiteral("all"));
-  json["contentFilter"] = contentFilter;
-  json["sortFilter"] = QStringLiteral("");
+
+  for (QString const& filter : contentFilter) {
+    filters.push_back(filter);
+  }
+  if (filters.empty()) {
+    filters.push_back(QStringLiteral("all"));
+  }
+
+  json["contentFilter"] = filters;
+  json["sortFilter"] = sortFilter;
   document = QJsonDocument(json);
 
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
@@ -109,24 +116,31 @@ void Extractor::search(QString const& searchTerm)
   watcher->setFuture(invokeAsync("searchFor", &document));
 }
 
-void Extractor::searchMore(QString const& searchTerm, PageRef* page)
+void Extractor::searchMore(QString const& searchTerm, QStringList const& contentFilter, QString const& sortFilter, PageRef* page)
 {
   QJsonObject json;
-  QJsonArray contentFilter;
+  QJsonArray filters;
   QJsonDocument document;
 
   json["service"] = QStringLiteral("YouTube");
   json["searchString"] = searchTerm;
-  contentFilter.push_back(QStringLiteral("all"));
-  json["contentFilter"] = contentFilter;
-  json["sortFilter"] = QStringLiteral("");
+
+  for (QString const& filter : contentFilter) {
+    filters.push_back(filter);
+  }
+  if (filters.empty()) {
+    filters.push_back(QStringLiteral("all"));
+  }
+
+  json["contentFilter"] = filters;
+  json["sortFilter"] = sortFilter;
   json["page"] = page->toJson();
   document = QJsonDocument(json);
 
   QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
   QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher]() {
     QJsonDocument result = watcher->result();
-    //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+    qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
     QJsonArray items = result.object()["itemsList"].toArray();
     QList<SearchItem const*> searchResults;
@@ -292,7 +306,7 @@ void Extractor::getChannelInfo(ChannelInfo* channelInfo, LinkHandlerModel* linkH
   QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, channelInfo, lifetimeCheck, linkHandlerModel]() {
     if (!lifetimeCheck->destroyed()) {
       QJsonDocument result = watcher->result();
-      qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
       channelInfo->parseJson(result.object());
       linkHandlerModel->setModel(channelInfo);
@@ -318,14 +332,19 @@ void Extractor::getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandle
   QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, channelTabInfo, lifetimeCheck, videoModel]() {
     if (!lifetimeCheck->destroyed()) {
       QJsonDocument result = watcher->result();
-      qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
 
       channelTabInfo->parseJson(result.object());
+
+      QStringList const& contentFilters = channelTabInfo->contentFilters();
+      videoModel->setContentFilters(contentFilters);
+      QString const& sortFilter = channelTabInfo->sortFilter();
+      videoModel->setSortFilter(sortFilter);
 
       QJsonArray items = result.object()["relatedItems"].toArray();
       QList<SearchItem const*> searchResults;
       for (QJsonValue const& item : items) {
-        SearchItem const* deserialised = SearchItem::createSearchItem(item.toObject(), m_searchModel);
+        SearchItem const* deserialised = SearchItem::createSearchItem(item.toObject(), videoModel);
         searchResults.append(deserialised);
       }
       videoModel->replaceAll(searchResults);
@@ -336,4 +355,38 @@ void Extractor::getChannelTabInfo(ChannelTabInfo* channelTabInfo, ListLinkHandle
     delete watcher;
   });
   watcher->setFuture(invokeAsync("getChannelTabInfo", &document));
+}
+
+void Extractor::getMoreChannelItems(ListLinkHandler* linkHandler, PageRef* page, SearchModel* videoModel)
+{
+  QJsonObject json;
+  QJsonArray filters;
+  QJsonDocument document;
+
+  json = linkHandler->toJson();
+  json["service"] = QStringLiteral("YouTube");
+  json["page"] = page->toJson();
+  document = QJsonDocument(json);
+
+  QFutureWatcher<QJsonDocument>* watcher = new QFutureWatcher<QJsonDocument>();
+  LifetimeCheck* lifetimeCheck = new LifetimeCheck(videoModel, watcher);
+  QObject::connect(watcher, &QFutureWatcher<QJsonDocument>::finished, [this, watcher, videoModel, lifetimeCheck]() {
+    if (!lifetimeCheck->destroyed()) {
+      QJsonDocument result = watcher->result();
+      //qDebug() << "Result: " << result.toJson(QJsonDocument::Indented);
+
+      QJsonArray items = result.object()["itemsList"].toArray();
+      QList<SearchItem const*> searchResults;
+      for (QJsonValue const& item : items) {
+        SearchItem const* deserialised = SearchItem::createSearchItem(item.toObject(), videoModel);
+        searchResults.append(deserialised);
+      }
+      videoModel->append(searchResults);
+      PageRef* page = new PageRef(result.object()["nextPage"].toObject(), videoModel);
+      videoModel->setNextPage(page);
+    }
+
+    delete watcher;
+  });
+  watcher->setFuture(invokeAsync("getMoreChannelItems", &document));
 }

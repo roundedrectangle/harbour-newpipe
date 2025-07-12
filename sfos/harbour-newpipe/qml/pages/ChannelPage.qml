@@ -128,6 +128,14 @@ Page {
 
                     VerticalScrollDecorator {}
 
+                    onContentYChanged: {
+                        var pos = contentHeight + originY - height - contentY;
+                        if ((pos < height) && !videoModel.loading && videoModel.more && videoModel.nextPage) {
+                            var linkHandler = linkHandlerModel.getLinkHandler(0);
+                            videoModel.getMoreChannelItems(extractor, linkHandler);
+                        }
+                    }
+
                     ViewPlaceholder {
                         enabled: flickable.count === 0
                         textFormat: Text.RichText

@@ -7,6 +7,7 @@
 
 class PageRef;
 class Extractor;
+class ListLinkHandler;
 
 class SearchModel : public QAbstractListModel
 {
@@ -38,7 +39,8 @@ public:
 
 public slots:
   void search(Extractor* extractor, QString const& searchTerm);
-  void searchMore(Extractor* extractor, QString const& searchTerm);
+  void searchMore(Extractor* extractor);
+  void getMoreChannelItems(Extractor* extractor, ListLinkHandler* linkHandler);
 
   PageRef* nextPage() const;
   void setNextPage(PageRef* nextPage);
@@ -48,6 +50,16 @@ public slots:
 
   bool more() const;
   void setMore(bool more);
+
+public:
+  QString searchTerm() const;
+  void setSearchTerm(QString const& searchTerm);
+
+  QStringList contentFilters() const;
+  void setContentFilters(QStringList const& contentFilter);
+
+  QString sortFilter() const;
+  void setSortFilter(QString const& sortFilter);
 
 signals:
   void nextPageChanged();
@@ -60,6 +72,9 @@ private:
   PageRef* m_nextPage;
   bool m_loading;
   bool m_more;
+  QString m_searchTerm;
+  QStringList m_contentFilters;
+  QString m_sortFilter;
 };
 
 #endif // SEARCHMODEL_H

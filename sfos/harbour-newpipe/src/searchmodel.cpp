@@ -13,6 +13,9 @@ SearchModel::SearchModel(QObject *parent)
   , m_nextPage()
   , m_loading(false)
   , m_more(true)
+  , m_searchTerm()
+  , m_contentFilters()
+  , m_sortFilter()
 {
   m_roles[NameRole] = "name";
   m_roles[ThumbnailRole] = "thumbnail";
@@ -86,25 +89,39 @@ void SearchModel::search(Extractor* extractor, QString const& searchTerm)
     m_nextPage = nullptr;
     delete m_nextPage;
   }
+  m_searchTerm = searchTerm;
+  m_contentFilters.clear();
+  m_sortFilter.clear();
   setLoading(true);
-  extractor->search(searchTerm);
+  extractor->search(m_searchTerm, m_contentFilters, m_sortFilter);
 }
 
-void SearchModel::searchMore(Extractor* extractor, QString const& searchTerm)
+void SearchModel::searchMore(Extractor* extractor)
 {
   if (m_more) {
     if (!m_nextPage) {
       setLoading(true);
-      extractor->search(searchTerm);
+      extractor->search(m_searchTerm, m_contentFilters, m_sortFilter);
     }
     else {
-      if (!m_nextPage->id().isEmpty()) {
+      if (!(m_nextPage->id().isEmpty() && m_nextPage->ids().empty())) {
         setLoading(true);
-        extractor->searchMore(searchTerm, m_nextPage);
+        extractor->searchMore(m_searchTerm, m_contentFilters, m_sortFilter, m_nextPage);
       }
     }
   }
 }
+
+void SearchModel::getMoreChannelItems(Extractor* extractor, ListLinkHandler* linkHandler)
+{
+  if (m_more) {
+    if (m_nextPage && !(m_nextPage->id().isEmpty() && m_nextPage->ids().empty())) {
+      setLoading(true);
+      extractor->getMoreChannelItems(linkHandler, m_nextPage, this);
+    }
+  }
+}
+
 
 PageRef* SearchModel::nextPage() const
 {
@@ -121,7 +138,7 @@ void SearchModel::setNextPage(PageRef* nextPage)
 
     emit nextPageChanged();
 
-    bool more = m_nextPage && !m_nextPage->id().isEmpty();
+    bool more = m_nextPage && !(m_nextPage->id().isEmpty() && m_nextPage->ids().isEmpty());
     setMore(more);
   }
 }
@@ -151,4 +168,34 @@ void SearchModel::setMore(bool more)
     m_more = more;
     emit moreChanged();
   }
+}
+
+QString SearchModel::searchTerm() const
+{
+  return m_searchTerm;
+}
+
+void SearchModel::setSearchTerm(QString const& searchTerm)
+{
+  m_searchTerm = searchTerm;
+}
+
+QStringList SearchModel::contentFilters() const
+{
+  return m_contentFilters;
+}
+
+void SearchModel::setContentFilters(QStringList const& contentFilters)
+{
+  m_contentFilters = contentFilters;
+}
+
+QString SearchModel::sortFilter() const
+{
+  return m_sortFilter;
+}
+
+void SearchModel::setSortFilter(QString const& sortFilter)
+{
+  m_sortFilter = sortFilter;
 }

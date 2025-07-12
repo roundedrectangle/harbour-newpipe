@@ -45,7 +45,7 @@ Page {
         onContentYChanged: {
             var pos = contentHeight + originY - height - contentY;
             if ((pos < height) && !searchModel.loading && searchModel.more && searchModel.nextPage) {
-                searchModel.searchMore(extractor, searchString);
+                searchModel.searchMore(extractor);
             }
         }
 
