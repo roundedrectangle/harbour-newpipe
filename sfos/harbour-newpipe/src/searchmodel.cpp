@@ -92,7 +92,12 @@ void SearchModel::search(Extractor* extractor)
   m_contentFilters.clear();
   m_sortFilter.clear();
   setLoading(true);
-  extractor->search(this, m_searchTerm, m_contentFilters, m_sortFilter);
+  if (!m_searchTerm.isEmpty()) {
+    extractor->search(this, m_searchTerm, m_contentFilters, m_sortFilter);
+  }
+  else {
+    clear();
+  }
 }
 
 void SearchModel::searchMore(Extractor* extractor)
@@ -111,16 +116,16 @@ void SearchModel::searchMore(Extractor* extractor)
   }
 }
 
-void SearchModel::getMoreChannelItems(Extractor* extractor, ListLinkHandler* linkHandler)
+void SearchModel::clear()
 {
-  if (m_more) {
-    if (m_nextPage && !(m_nextPage->id().isEmpty() && m_nextPage->ids().empty())) {
-      setLoading(true);
-      extractor->getMoreChannelItems(linkHandler, m_nextPage, this);
-    }
+  beginResetModel();
+  for (SearchItem const* searchItem : m_searchResults) {
+    delete searchItem;
   }
+  m_searchResults.clear();
+  endResetModel();
+  setLoading(false);
 }
-
 
 PageRef* SearchModel::nextPage() const
 {

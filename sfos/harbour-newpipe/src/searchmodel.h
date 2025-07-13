@@ -41,7 +41,7 @@ public:
 public slots:
   virtual void search(Extractor* extractor);
   virtual void searchMore(Extractor* extractor);
-  void getMoreChannelItems(Extractor* extractor, ListLinkHandler* linkHandler);
+  void clear();
 
   PageRef* nextPage() const;
   void setNextPage(PageRef* nextPage);
