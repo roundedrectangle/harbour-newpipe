@@ -5,26 +5,26 @@
     <name></name>
     <message id="newpipe-comment_item-replies" numerus="yes">
         <source>%n replies</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n Antwort</numerusform>
+            <numerusform>%n Antworten</numerusform>
         </translation>
     </message>
     <message id="newpipe-replies_page-header">
         <source>Replies</source>
-        <translation type="unfinished"></translation>
+        <translation>Antworten</translation>
     </message>
     <message id="newpipe-proglist_search-placeholder">
         <source>Search</source>
-        <translation type="unfinished"></translation>
+        <translation>Suche</translation>
     </message>
     <message id="newpipe-proglist_search-no-entries">
         <source>No entries</source>
-        <translation type="unfinished"></translation>
+        <translation>Keine Einträge</translation>
     </message>
     <message id="newpipe-proglist_search-enter-some-text">
         <source>Enter some text to search</source>
-        <translation type="unfinished"></translation>
+        <translation>Gib Text ein um zu suchen</translation>
     </message>
     <message id="newpipe-video_page-header">
         <source>YouTube Video</source>
@@ -32,67 +32,67 @@
     </message>
     <message id="newpipe-cover-title">
         <source>NewPipe</source>
-        <translation type="unfinished"></translation>
+        <translation>NewPipe</translation>
     </message>
     <message id="newpipe-media_details-detail_uploader">
         <source>Uploader</source>
-        <translation type="unfinished"></translation>
+        <translation>Uploader</translation>
     </message>
     <message id="newpipe-media_details-detail_category">
         <source>Category</source>
-        <translation type="unfinished"></translation>
+        <translation>Kategorie</translation>
     </message>
     <message id="newpipe-media_details-detail_description">
         <source>Description</source>
-        <translation type="unfinished"></translation>
+        <translation>Beschreibung</translation>
     </message>
     <message id="newpipe-media_details-detail_date">
         <source>Upload date</source>
-        <translation type="unfinished"></translation>
+        <translation>Veröffentlichungsdatum</translation>
     </message>
     <message id="newpipe-media_details-detail_length">
         <source>Length</source>
-        <translation type="unfinished"></translation>
+        <translation>Länge</translation>
     </message>
     <message id="newpipe-media_details-detail_licence">
         <source>Licence</source>
-        <translation type="unfinished"></translation>
+        <translation>Lizenz</translation>
     </message>
     <message id="newpipe-searchitem-stream_inforow">
         <source>%0 • %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%0 • %1</translation>
     </message>
     <message id="newpipe-searchitem-channel_stream_count" numerus="yes">
         <source>%n items</source>
         <oldsource>%n item(s)</oldsource>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n Eintrag</numerusform>
+            <numerusform>%n Einträge</numerusform>
         </translation>
     </message>
     <message id="newpipe-searchitem-channel_subscriber_count" numerus="yes">
         <source>%n subscribers</source>
         <oldsource>%n subscriber(s)</oldsource>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n Abonnent</numerusform>
+            <numerusform>%n Abonnenten</numerusform>
         </translation>
     </message>
     <message id="newpipe-searchitem-channel_inforow">
         <source>%0 • %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%0 • %1</translation>
     </message>
     <message id="newpipe-searchitem-playlist_stream_count" numerus="yes">
         <source>%n items</source>
         <oldsource>%n item(s)</oldsource>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n Eintrag</numerusform>
+            <numerusform>%n Einträge</numerusform>
         </translation>
     </message>
     <message id="newpipe-searchitem-playlist_inforow">
         <source>%0 • %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%0 • %1</translation>
     </message>
 </context>
 <context>
