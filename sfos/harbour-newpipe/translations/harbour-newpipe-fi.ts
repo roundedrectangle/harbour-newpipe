@@ -5,18 +5,18 @@
     <name></name>
     <message id="newpipe-comment_item-replies" numerus="yes">
         <source>%n replies</source>
-        <translation type="unfinished">
-            <numerusform>%n reply</numerusform>
-            <numerusform>%n replies</numerusform>
+        <translation>
+            <numerusform>%n vastaus</numerusform>
+            <numerusform>%n vastausta</numerusform>
         </translation>
     </message>
     <message id="newpipe-replies_page-header">
         <source>Replies</source>
-        <translation type="unfinished">Replies</translation>
+        <translation>Vastaukset</translation>
     </message>
     <message id="newpipe-proglist_search-placeholder">
         <source>Search</source>
-        <translation type="unfinished">Search</translation>
+        <translation>Haku</translation>
     </message>
     <message id="newpipe-proglist_search-no-entries">
         <source>No entries</source>
