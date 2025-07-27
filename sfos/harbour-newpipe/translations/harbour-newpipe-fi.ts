@@ -28,59 +28,59 @@
     </message>
     <message id="newpipe-video_page-header">
         <source>YouTube Video</source>
-        <translation type="unfinished">YouTube Video</translation>
+        <translation>Youtube-video</translation>
     </message>
     <message id="newpipe-cover-title">
         <source>NewPipe</source>
-        <translation type="unfinished"></translation>
+        <translation>NewPipe</translation>
     </message>
     <message id="newpipe-media_details-detail_uploader">
         <source>Uploader</source>
-        <translation type="unfinished"></translation>
+        <translation>Julkaisija</translation>
     </message>
     <message id="newpipe-media_details-detail_category">
         <source>Category</source>
-        <translation type="unfinished"></translation>
+        <translation>Kategoria</translation>
     </message>
     <message id="newpipe-media_details-detail_description">
         <source>Description</source>
-        <translation type="unfinished"></translation>
+        <translation>Kuvaus</translation>
     </message>
     <message id="newpipe-media_details-detail_date">
         <source>Upload date</source>
-        <translation type="unfinished"></translation>
+        <translation>Julkaistu</translation>
     </message>
     <message id="newpipe-media_details-detail_length">
         <source>Length</source>
-        <translation type="unfinished"></translation>
+        <translation>Kesto</translation>
     </message>
     <message id="newpipe-media_details-detail_licence">
         <source>Licence</source>
-        <translation type="unfinished"></translation>
+        <translation>Lisenssi</translation>
     </message>
     <message id="newpipe-searchitem-stream_inforow">
         <source>%0 • %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%0 • %1</translation>
     </message>
     <message id="newpipe-searchitem-channel_stream_count" numerus="yes">
         <source>%n items</source>
         <oldsource>%n item(s)</oldsource>
-        <translation type="unfinished">
-            <numerusform>%n item</numerusform>
-            <numerusform>%n items</numerusform>
+        <translation>
+            <numerusform>%n video</numerusform>
+            <numerusform>%n videota</numerusform>
         </translation>
     </message>
     <message id="newpipe-searchitem-channel_subscriber_count" numerus="yes">
         <source>%n subscribers</source>
         <oldsource>%n subscriber(s)</oldsource>
-        <translation type="unfinished">
-            <numerusform>%n subscriber</numerusform>
-            <numerusform>%n subscribers</numerusform>
+        <translation>
+            <numerusform>%n tilaaja</numerusform>
+            <numerusform>%n tilaajaa</numerusform>
         </translation>
     </message>
     <message id="newpipe-searchitem-channel_inforow">
         <source>%0 • %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%0 • %1</translation>
     </message>
     <message id="newpipe-searchitem-playlist_stream_count" numerus="yes">
         <source>%n items</source>
@@ -92,7 +92,7 @@
     </message>
     <message id="newpipe-searchitem-playlist_inforow">
         <source>%0 • %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%0 • %1</translation>
     </message>
 </context>
 </TS>
