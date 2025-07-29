@@ -28,7 +28,7 @@
     </message>
     <message id="newpipe-video_page-header">
         <source>YouTube Video</source>
-        <translation type="unfinished"></translation>
+        <translation>YouTube-Video</translation>
     </message>
     <message id="newpipe-cover-title">
         <source>NewPipe</source>
