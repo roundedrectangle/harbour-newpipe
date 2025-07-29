@@ -20,7 +20,7 @@
     </message>
     <message id="newpipe-proglist_search-no-entries">
         <source>No entries</source>
-        <translation type="unfinished">No entries</translation>
+        <translation>Ei tuloksia</translation>
     </message>
     <message id="newpipe-proglist_search-enter-some-text">
         <source>Enter some text to search</source>
