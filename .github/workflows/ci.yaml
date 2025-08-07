@@ -4,11 +4,11 @@ on:
   # schedule:
   #     # once per day
   #   - cron: 0 0 * * *
-  # push:
-  #   branches:
-  #     - dev
-  #     - master
-  # pull_request:
+  push:
+    branches:
+      - dev
+      - master
+  pull_request:
   workflow_dispatch:
 
 permissions:
