@@ -14,6 +14,13 @@ on:
 permissions:
   contents: read
 
+env:
+  GRAALVM_VERSION: 23
+  JDK_VERSION: 23
+  GRAALVM_URL: https://download.oracle.com/graalvm/23/latest/graalvm-jdk-23_linux-aarch64_bin.tar.gz
+  GRAALVM_HOME: /usr/lib/graalvm
+  JAVA_HOME: /usr/lib/graalvm
+
 jobs:
   build-and-test:
     runs-on: ubuntu-24.04-arm
