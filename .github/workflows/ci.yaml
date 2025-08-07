@@ -27,6 +27,8 @@ jobs:
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
+        with:
+            submodules: recursive
 
       - name: install necessary stuff
         run: sudo apt update && sudo apt install -y git build-essential zlib1g-dev libcurl4-openssl-dev libreadline-dev tree
