@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  # schedule:
+  #     # once per day
+  #   - cron: 0 0 * * *
+  # push:
+  #   branches:
+  #     - dev
+  #     - master
+  # pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install necessary stuff
+        run: sudo apt update && sudo apt install -y git build-essential zlib1g-dev libcurl4-openssl-dev libreadline-dev tree
+
+      - name: download & extract graalvm
+        run: |
+          curl -L -o graalvm.tar.gz $GRAALVM_URL && \
+          sudo tar -xzf graalvm.tar.gz -C /usr/lib && \
+          rm graalvm.tar.gz
+      # todo: cache
+        # uses: actions/cache@v4
+        # with:
+        #   path: ~/.gradle/caches
+        #   key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+        #   restore-keys: ${{ runner.os }}-gradle
+
+        # See gradle file for difference between downloaders
+      - name: do whatever this means
+        run: sudo mv /usr/lib/graalvm-jdk-* /usr/lib/graalvm
+
+      - name: print some stuff for debugging in the future
+        run: tree && echo "NOW LS -LH" && ls -lh
+
+      - name: build
+        run: |
+          export PATH=$JAVA_HOME/bin:$PATH
+          cd java/NewPipeExtractor
+          ./gradlew nativeCompile
+
+      - name: print some stuff for debugging in the future (2)
+        run: tree && echo "NOW LS -LH" && ls -lh
+
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            java/NewPipeExtractor/extractor/build/native/nativeCompile/*.h
+            java/NewPipeExtractor/appwrapper/build/native/nativeCompile/*.h
+            java/NewPipeExtractor/extractor/build/native/nativeCompile/extractor.so
+            java/NewPipeExtractor/appwrapper/build/native/nativeCompile/appwrapper.so
